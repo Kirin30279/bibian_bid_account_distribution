@@ -2,53 +2,78 @@
 namespace BibianBidAccount\Libs;
 class Product
 {
-    private $_title;
+    private $title;
 
-    private $_seller;
+    private $Seller_ID;
 
-    private $_price_now;
+    private $price_now;
 
-    private $_starting_time;
+    private $starting_time;
 
-    private $_end_time;
+    private $end_time;
 
-    private $_bibian_users;
+    private $bibian_users;
 
-    private $_used_acconut;
+    private $used_acconut;
 
-    public function __construct($title, $seller)
+    public function __construct($Product_ID, $Seller_ID)
     {
-        $this->_title = $title;
-        $this->_seller = $_seller;
-        $this->_getPriceNow();
-        $this->_getStartingTime();
-        $this->_getEndTime();
-        $this->_bibian_users = array();
+        if ($this->isProductExist()){
+            $this->loadInfoProductFromDB($Product_ID);
+        } else{
+            $this->createProduct($Product_id, $Seller_ID);
+            $this->saveInfoToDB();
+        }
+
     }
 
-    private function _getPriceNow()
+    private function getPriceNow()
     {//取價函數，尚未實作
-        $this->_price_now = 50;
+        $this->price_now = 50;
     }
 
-    private function _getStartingTime()
+    private function getStartingTime()
     {//取時函數，尚未實作
-        $this->_starting_time = time();
+        $this->starting_time = time();
     }
 
-    private function _getEndTime()
+    private function getEndTime()
     {//取時函數，尚未實作
-        $this->_end_time = time()+5000;
+        $this->end_time = time()+5000;
     }
 
 
     Public function getBibianUser($bibianUser)
     {
-        $this->_bibian_users = array_push($bibianUser);
+        $this->bibian_users = array_push($bibianUser);
     }
  
     public function assignAccount()
     {
         
     }
+
+    public function isProductExist($Product_ID){
+        $take_ProductID = "SELECT * FROM `Product_list` WHERE `Product_ID`= $Product_ID";   
+        $result = $connect->query($take_ProductID);
+        if (is_null($result)){
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    private function saveInfoToDB(){
+        
+    }
+
+    private function createProduct($Product_id, $Seller_ID){
+        $this->title = $Product_ID;
+        $this->seller = $Seller_ID;
+        $this->getPriceNow();
+        $this->getStartingTime();
+        $this->getEndTime();
+        $this->bibian_users = array();
+    }
+
 }

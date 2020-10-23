@@ -10,17 +10,16 @@ class MemberForBid
 
     private $bidPrice;
 
-    private $biding_time;
+    private $firstBidingTime;
 
-    public function __construct($member_ID, $Seller_ID)
+    private $isMemberExist;
+
+    public function __construct($memberID, $productID)
     {
-        if ($this->isProductExist()){
-            $this->loadInfoProductFromDB($Product_ID);
-        } else{
-            $this->createProduct($Product_id, $Seller_ID);
-            $this->saveInfoToDB();
+        $this->loadInfoFromDB($memberID, $productID);
+        if(!($this->isMemberExist)){
+            $this->createMember($memberID, $productID);
         }
-
     }
 
     public function doBid($Product_Number)
@@ -32,8 +31,27 @@ class MemberForBid
         $this->bid_price = $bidPrice;
     }
 
-    
 
+    private function loadInfoFromDB($memberID, $productID){
+        $take_memberId = "SELECT * FROM `bider_list` WHERE `memberID`= $memberID AND `productID` = $productID";   
+        $result = $connect->query($take_memberId);
+        if (is_null($result)){
+            $this->isMemberExist = false;
+        } else {
+            $this->isMemberExist = true;
+            $this->memberID = $result['memberID'];
+            $this->usedYahooAccount = $result['usedYahooAccount'];
+            $this->product = $result['productID'];
+            $this->firstBidingTime = $result['firstBidingTime'];
+        }
+
+    }
+
+    private function createMember($memberID){
+        $this->memberID = $memberID;
+        $this->product = $result['product'];
+        $this->firstBidingTime = $result['firstBidingTime'];
+    }
 
 }
 

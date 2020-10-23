@@ -2,53 +2,53 @@
 namespace BibianBidAccount\Libs;
 class Seller
 {   
-    private $Seller_ID;//賣家帳號
+    private $sellerID;//賣家帳號
 
-    private $Product;//競標中賣場
+    private $product;//競標中賣場
 
-    public $AccountCounter;//指派帳號計數器
+    public $accountCounter;//指派帳號計數器
 
-    private $YahooAccount;//當前指派Yahoo帳號
+    private $yahooAccount;//當前指派Yahoo帳號
 
-    private $AccountList;
+    private $accountList;
 
-    public function __construct($Seller_ID)
+    public function __construct($sellerID)
     {
-        if ($this->isSellerExist()){
-            $this->loadInfoFromDB($Seller_ID);//抓DB裡面的資料來更新這次用的Seller 
+        if ($this->isSellerExist($sellerID)){
+            $this->loadInfoFromDB($sellerID);//抓DB裡面的資料來更新這次用的Seller 
         } else{
-            $this->createSeller($Seller_ID);
+            $this->createSeller($sellerID);
         }
 
     }
 
     private function _assignAccount()
     {
-        $this->YahooAccount = $this->AccountList[$this->AccountCounter];
-        $this->AccountCounter += 1 ;
+        $this->yahooAccount = $this->accountList[$this->accountCounter];
+        $this->accountCounter += 1 ;
     }
 
     public function returnProduct()
     {
-        return $this->Product;
+        return $this->product;
     }
 
-    public function addProduct($Product)
+    public function addProduct($product)
     {
-        $this->Product = array_push($Product);
+        $this->product = array_push($product);
     }
 
-    public function getAccountList($AccountList)
+    public function getAccountList($accountList)
     {
-        $this->AccountList = $AccountList;
+        $this->accountList = $accountList;
     }
 
-    public function returnAccountCounter(){
-        return $this->AccountCounter;
+    public function returnaccountCounter(){
+        return $this->accountCounter;
     }
 
     public function isSellerExist(){
-        $take_SellerID = "SELECT * FROM `Seller_list` WHERE `Seller_ID`= $Seller_ID";   
+        $take_SellerID = "SELECT * FROM `Seller_list` WHERE `sellerID`= $sellerID";   
         $result = $connect->query($take_SellerID);
         if (is_null($result)){
             return false;
@@ -57,10 +57,10 @@ class Seller
         }
     }
 
-    private function createSeller($Seller_ID){
-        $this->Seller_ID = $Seller_ID;
+    private function createSeller($sellerID){
+        $this->sellerID = $sellerID;
         //AccountList不應該寫在Class裡面，找時間拿出去
-        $this->AccountList  = array(
+        $this->accountList  = array(
             '0' => '帳號0',
             '1' => '帳號1',
             '2' => '帳號2',
@@ -69,8 +69,8 @@ class Seller
             '5' => '帳號5',
         );
         $this->_assignAccount();
-        $this->AccountCounter = 0;
-        $this->Product = array();
+        $this->accountCounter = 0;
+        $this->product = array();
         $this->saveInfoToDB();
     }
 
@@ -78,11 +78,11 @@ class Seller
 
     }
 
-    private function loadInfoFromDB($Seller_ID){
+    private function loadInfoFromDB($sellerID){
 
     }
 
     public function returnSellerID(){
-        return $this->Seller_ID;
+        return $this->sellerID;
     }
 }

@@ -2,7 +2,7 @@
 namespace BibianBidAccount\Libs;
 class Product
 {
-    private $title;
+    private $Product_ID;
 
     private $Seller_ID;
 

@@ -2,37 +2,54 @@
 namespace BibianBidAccount\Libs;
 class Seller
 {   
-    private $_SellerAccount;//賣家帳號
+    private $SellerAccount;//賣家帳號
 
-    private $_YahooAccount;//當前指派Yahoo帳號
+    private $Product;//競標中賣場
 
-    private $_Product;//競標中賣場
+    public $AccountCounter;//指派帳號計數器
 
-    private $_AccountCounter;//指派帳號計數器
+    private $YahooAccount;//當前指派Yahoo帳號
+
+    private $AccountList;
 
     public function __construct($SellerAccount)
     {
-        $this->$_SellerAccount = $SellerAccount;
+        $this->SellerAccount = $SellerAccount;
+        $this->AccountList  = array(
+            '0' => '帳號0',
+            '1' => '帳號1',
+            '2' => '帳號2',
+            '3' => '帳號3',
+            '4' => '帳號4',
+            '5' => '帳號5',
+        );
         $this->_assignAccount();
-        $this->$_AccountCounter = 0;
-        $this->_Product = array();
+        $this->AccountCounter = 0;
+        $this->Product = array();
     }
 
     private function _assignAccount()
     {
-        $this->$_YahooAccount = $AccountList[$this->_AccountCounter];
-        $this->$_AccountCounter += 1 ;
+        $this->YahooAccount = $this->AccountList[$this->AccountCounter];
+        $this->AccountCounter += 1 ;
     }
 
     public function returnProduct()
     {
-        return $this->_Product;
+        return $this->Product;
     }
 
     public function addProduct($Product)
     {
-        $this->_Product = array_push($Product);
+        $this->Product = array_push($Product);
     }
 
+    public function getAccountList($AccountList)
+    {
+        $this->AccountList = $AccountList;
+    }
 
+    public function returnAccountCounter(){
+        return $this->AccountCounter;
+    }
 }

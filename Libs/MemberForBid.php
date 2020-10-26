@@ -29,6 +29,9 @@ class MemberForBid
 
     public $testSucess; //拿來測試為投標成功或失敗用的參數，正式版要刪除。
 
+    public $bidFailTime;//嘗試超過3次以上則失敗
+
+    public $bidSucess;//出價成功則外面迴圈不再出價
 
     public function __construct($memberID, $productID)
     {
@@ -37,7 +40,8 @@ class MemberForBid
         if(!($this->isMemberExist)){
             $this->createMember($memberID, $productID);
         }
-
+        $this->bidFailTime = 0 ;
+        $this->bidSucess = false ;
     }
 
     public function setSellerID($sellerID){
@@ -69,6 +73,7 @@ class MemberForBid
         $this->renewBidingTime = time();
         if ($this->testSucess){
             echo "投標成功".'<Br>';//成功後把投標資料寫入DB
+            $this->bidSucess = true ;
             $bidInsertSQL = "INSERT INTO 
             bidder_list(memberID, usedYahooAccount, productID, bidPrice, sellerID, firstBidingTime, renewBidingTime, bidStatus) 
             VALUES ($this->memberID, '$this->usedYahooAccount', '$this->productID', $this->bidPrice, '$this->sellerID', $this->firstBidingTime, $this->renewBidingTime, $this->bidStatus)
@@ -76,12 +81,12 @@ class MemberForBid
             $this->connect->query($bidInsertSQL);
             echo '這次的SQL指令:'.$bidInsertSQL.'<Br>';
         } else{
+            $this->bidFailTime += 1 ;
             echo "投標失敗，換帳號".'<Br>';
             $seller = new Seller($this->sellerID);         
             $seller->changeToNextAccount();
             $this->usedYahooAccount = $seller->returnYahooAccount();
-            var_dump($this);
-            exit();
+
         }
         
     }

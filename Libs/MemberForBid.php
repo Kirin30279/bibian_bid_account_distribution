@@ -7,24 +7,26 @@ use BibianBidAccount\Libs\Product;
 
 class MemberForBid
 {
-    private $memberID;
+    private $memberID;//會員編號
 
-    private $usedYahooAccount;
+    private $usedYahooAccount;//目前指派的Y拍帳號
 
-    private $productID;
+    private $productID;//這次出價的賣場編號
 
-    private $bidPrice;
+    private $bidPrice;//這次出價的價格
 
-    private $bidStatus;
+    private $bidStatus;//這次出價的狀態(立即or最後出)
 
-    private $firstBidingTime;
+    private $firstBidingTime;//該使用者對該賣場第一次出價的時間
 
-    private $renewBidingTime;
+    private $renewBidingTime;//該使用者最後一次出價的時間
 
-    private $sellerID;
+    private $sellerID;//賣家ID
 
+    //判斷該使用者是否已經對該賣場投標過，若有，則先用原本使用投標帳號，
+    //↓除非投標失敗，才會指定到該賣家新帳號
     private $isMemberExist;
-
+    
     private $connect;//DB的連接
 
     public $testSucess; //拿來測試為投標成功或失敗用的參數，正式版要刪除。
@@ -37,11 +39,12 @@ class MemberForBid
     {
         $this->connect = new mysqli('localhost','root','','bid_account');
         $this->loadInfoFromDB($memberID, $productID);
-        if(!($this->isMemberExist)){
-            $this->createMember($memberID, $productID);
+        //讀取DB裡面該使用者對該賣場的投標資訊，若無，則isMemberExist屬性指定為False
+        if(!($this->isMemberExist)){//未投標過此賣場
+            $this->createNewBidder($memberID, $productID);
         }
         $this->bidFailTime = 0 ;
-        $this->bidSucess = false ;
+        $this->bidSucess = false ;//投標成功後會改成True
     }
 
     public function setSellerID($sellerID){
@@ -84,7 +87,7 @@ class MemberForBid
             $this->bidFailTime += 1 ;
             echo "投標失敗，換帳號".'<Br>';
             $seller = new Seller($this->sellerID);         
-            $seller->changeToNextAccount();
+            $seller->changeToNextAccount();//換下一個輪替用的帳號
             $this->usedYahooAccount = $seller->returnYahooAccount();
 
         }
@@ -108,14 +111,13 @@ class MemberForBid
 
     }
 
-    private function createMember($memberID, $productID){
+    private function createNewBidder($memberID, $productID){
         $this->memberID = $memberID;
         $this->productID = $productID;
     }
 
-    private function getYahooAccount(){
+    private function getYahooAccount(){//取得賣家當前指派帳號
         $seller = new Seller($this->sellerID); 
-
         $this->usedYahooAccount = $seller->returnYahooAccount();
     }
 

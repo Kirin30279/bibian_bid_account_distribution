@@ -1,31 +1,27 @@
 <?PHP
 include 'config.php';
 use BibianBidAccount\Libs\MemberForBid;
-// $productID = $_POST['productID']; //賣場編號
-// $bidPrice = $_POST['bidPrice']; //用戶出價
-$productID = 'T2222111150';
-$sellerID = 'seller_1121';
-$bidPrice = 9800;
-$memberID = 75744;//會員編號
-$bidStatus = 0;//最後出價、立即出價
-
-
+$productID = 'T2222111150';//賣場
+$sellerID = 'seller_1121';//賣家
+$bidPrice = 95400;         //出價
+$memberID = 75744;        //會員編號
+$bidStatus = 0;           //出價狀態：最後出價、立即出價
 $Member = new MemberForBid($memberID, $productID);
 
 $Member->setBidPrice($bidPrice);
-$Member->setBidStatus($bidStatus);//立即或最後出價
+$Member->setBidStatus($bidStatus);
 $Member->setSellerID($sellerID);
 
-$Member->testSucess = true;//出價成功
-$Member->testSucess = false;//出價成功
 
-// var_dump($Member);
-// exit();
+//**$Member->testSucess的參數拿來模擬真正出價時的成功或失敗 */
+$Member->testSucess = true;//出價成功
+// $Member->testSucess = false;//出價失敗
+
+
+//失敗次數小於三次，且尚未投標成功則換帳號持續投標 
 while ($Member->bidFailTime<3 && $Member->bidSucess === false){
     $Member->doBid($productID, $bidPrice);
 }
-//$Member->echoYahooAccuount();
-//var_dump($Member);
 
 
 

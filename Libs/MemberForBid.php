@@ -1,10 +1,10 @@
 <?php
 
 namespace BibianBidAccount\Libs;
-use mysqli;
+
 use BibianBidAccount\Libs\Seller;
 use BibianBidAccount\Libs\Product;
-
+use mysqli;
 class MemberForBid
 {
     private $memberID;//會員編號
@@ -42,6 +42,12 @@ class MemberForBid
         //讀取DB裡面該使用者對該賣場的投標資訊，若無，則isMemberExist屬性指定為False
         if(!($this->isMemberExist)){//未投標過此賣場
             $this->createNewBidder($memberID, $productID);
+        } else{
+            echo "本使用者之前已投標過本訂單"."<br>";
+            echo "↓↓↓↓↓↓↓↓↓↓上次投標資訊↓↓↓↓↓↓↓↓↓↓"."<br>";
+            echo "上次使用的yahoo帳戶為：".$this->usedYahooAccount."<br>";
+            echo "上次投標金額為：".$this->bidPrice."円<br>";
+            echo "↑↑↑↑↑↑↑↑↑↑上次投標資訊↑↑↑↑↑↑↑↑↑↑"."<br>"."<br>"."<br>";
         }
         $this->bidFailTime = 0 ;
         $this->bidSucess = false ;//投標成功後會改成True
@@ -60,32 +66,32 @@ class MemberForBid
     }
 
     public function echoYahooAccuount(){
-        echo "目前使用的帳戶是：".$this->usedYahooAccount;
+        echo "目前使用的帳戶是：".$this->usedYahooAccount."<BR>";
     }
 
     public function doBid($productID, $bidPrice)
     {
 
         if (!($this->isMemberHasYahooAccuont())){
-            echo "沒有Y拍帳號，取得新帳號";
+            echo "本使用者該訂單沒有指定Y拍帳號，取得新帳號"."<br>"."<br>";
             $this->firstBidingTime = time();
             $this->getYahooAccount();
         } 
+        echo "本次投標使用帳號為:".$this->usedYahooAccount."<br >";
         $this->bidPrice = $bidPrice;
         $this->productID = $productID;
         $this->renewBidingTime = time();
         if ($this->testSucess){
-            echo "投標成功".'<Br>';//成功後把投標資料寫入DB
+            echo "※※※投標成功※※※".'<Br>'."<br>"."<br>";//成功後把投標資料寫入DB
             $this->bidSucess = true ;
             $bidInsertSQL = "INSERT INTO 
             bidder_list(memberID, usedYahooAccount, productID, bidPrice, sellerID, firstBidingTime, renewBidingTime, bidStatus) 
             VALUES ($this->memberID, '$this->usedYahooAccount', '$this->productID', $this->bidPrice, '$this->sellerID', $this->firstBidingTime, $this->renewBidingTime, $this->bidStatus)
             ON DUPLICATE KEY UPDATE usedYahooAccount='$this->usedYahooAccount', bidPrice=$this->bidPrice, renewBidingTime=$this->renewBidingTime, bidStatus=$this->bidStatus";
             $this->connect->query($bidInsertSQL);
-            echo '這次的SQL指令:'.$bidInsertSQL.'<Br>';
         } else{
             $this->bidFailTime += 1 ;
-            echo "投標失敗，換帳號".'<Br>';
+            echo "。。投標失敗，換帳號。。".'<Br>';
             $seller = new Seller($this->sellerID);         
             $seller->changeToNextAccount();//換下一個輪替用的帳號
             $this->usedYahooAccount = $seller->returnYahooAccount();
@@ -105,6 +111,7 @@ class MemberForBid
             $this->isMemberExist = true;
             $this->memberID = $row['memberID'];
             $this->usedYahooAccount = $row['usedYahooAccount'];
+            $this->bidPrice = $row['bidPrice'];
             $this->productID = $row['productID'];
             $this->firstBidingTime = $row['firstBidingTime'];
         }
@@ -129,6 +136,16 @@ class MemberForBid
         }
     }
 
+    public function showBidInfo(){//程式測試演示用
+        echo "投標者會員編號：".$this->memberID."<br>";
+        echo "賣家ID：".$this->sellerID."<br>";
+        echo "$this->sellerID"."當前指派的Y拍帳號：".$this->usedYahooAccount."<br>";
+        echo "賣場編號：".$this->productID."<br>";
+        echo "出價價格：".$this->bidPrice."円<br>";
+        echo "嘗試錯誤次數：".$this->bidFailTime."<br>";
+        echo "是否有成功出價：".$this->bidSucess."<br>";
+  
+    }
 
 }
 

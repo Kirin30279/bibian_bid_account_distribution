@@ -23,6 +23,9 @@ while ($Member->bidFailTime<3 && $Member->bidSucess === false){
     $Member->doBid($productID, $bidPrice);
 }
 
+if ($Member->bidSucess === false){
+    echo "三次出價皆失敗"."<BR>";
+}
 
 
 ?>

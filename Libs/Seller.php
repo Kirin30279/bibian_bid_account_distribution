@@ -1,6 +1,5 @@
 <?php
 namespace BibianBidAccount\Libs;
-
 use mysqli;
 class Seller
 {   
@@ -28,9 +27,12 @@ class Seller
 
     private function assignAccount()
     {
-        include "YahooAccount.php";
-        $numOfAccount = count($AccountList);
-        $this->yahooAccount = $AccountList[($this->accountCounter)%$numOfAccount];
+        $Account = new Account();
+        //$Account->getNewAccountShuffle();
+        $Account->getNextAccount();
+        $Account->countAccountNumber();
+        $numOfAccount = $Account->AccoutnNumber;
+        $this->yahooAccount = $Account->AccountList[($this->accountCounter)%$numOfAccount];
         $this->accountCounter += 1 ;
     }
 
@@ -59,7 +61,7 @@ class Seller
         $result = $this->connect->query($take_SellerID);
 
         if (empty($result->num_rows)){
-            echo "該Seller為第一次被投標，等等需指定新帳號";
+            echo "該Seller為第一次被投標，等等需指定新帳號"."<BR>";
             return false;
         } else {
             return true;
@@ -67,7 +69,7 @@ class Seller
     }
 
     private function createSeller($sellerID){
-        $this->sellerID = $sellerID;
+
         //AccountList不應該寫在Class裡面，找時間拿出去
         $this->accountCounter = 0;
         $this->assignAccount();
@@ -105,7 +107,7 @@ class Seller
     {
         $this->assignAccount();
         $this->saveInfoToDB();
-        echo '已經重新指派帳號為:'.$this->yahooAccount.'<br>';
+        echo '賣家'.$this->sellerID.'預設帳號重新指派為:'.$this->yahooAccount.'<br>';
     }
 
 }

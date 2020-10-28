@@ -20,7 +20,7 @@ class Seller
         if ($this->isSellerExist($this->sellerID)){
             $this->loadInfoFromDB($this->sellerID);//抓DB裡面的資料來更新這次用的Seller 
         } else{
-            $this->createSeller($this->sellerID);
+            $this->createSeller();
         }
 
     }
@@ -29,7 +29,7 @@ class Seller
     {
         $Account = new Account();
         //$Account->getNewAccountShuffle();
-        $Account->getNextAccount();
+        //$Account->switchToNextAccount();
         $Account->countAccountNumber();
         $numOfAccount = $Account->AccoutnNumber;
         $this->yahooAccount = $Account->AccountList[($this->accountCounter)%$numOfAccount];
@@ -68,9 +68,9 @@ class Seller
         }
     }
 
-    private function createSeller($sellerID){
+    private function createSeller(){
 
-        //AccountList不應該寫在Class裡面，找時間拿出去
+  
         $this->accountCounter = 0;
         $this->assignAccount();
 

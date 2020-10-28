@@ -5,9 +5,8 @@ use mysqli;
 
 class Account
 {
-    public $AccountList;
-    
-    public $AccoutnNumber;
+
+    public $quantityOfAccount;
 
     private $AccountTerm;
 
@@ -15,12 +14,14 @@ class Account
     
     private $connect;
 
+    private $AccountList;
+    
     public function __construct()
     {
         $this->connect = new mysqli('localhost','root','','bid_account');
     }
 
-    public function getNewAccountShuffle()
+    public function getNewShuffleAccountList()
     {
         include "YahooAccount.php";
         echo "取得新的帳號列表(隨機排列)"."<br>";
@@ -32,7 +33,7 @@ class Account
     public function checkAccountListTerm()
     {
         echo "確認帳號列表的時間是否過期，若過期則取得新列表，未過期繼續沿用"."<br>";
-        if(1){//尚未寫入條件
+        if(0){//尚未寫入條件
             echo "本組帳號過期了，換帳號"."還沒寫判斷，記得補"."<br>";
             $this->isTermExpired = true;
         } else{
@@ -46,22 +47,22 @@ class Account
 
     public function loadSellerAccountList($sellerID)
     {
-
+        $take_SellerID = "SELECT * FROM `Seller_list` WHERE `sellerID`= '$sellerID'";
+  
+        $result = $this->connect->query($take_SellerID);
     }
 
-    public function loadProductAccountList($productID)
-    {
 
-    }
 
     public function countAccountNumber()
     {
-        var_dump($this->AccountList);//要刪除
-        $this->AccoutnNumber = count($this->AccountList);
+        echo "計算帳號列表中有多少帳號"."<br>";
+        $this->quantityOfAccount = count($this->AccountList);
     }
 
-    public function getNextAccount()
+
+    public function returnAccountList()
     {
-        
+        return $this->AccountList;
     }
 }

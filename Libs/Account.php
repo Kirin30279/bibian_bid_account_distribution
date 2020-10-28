@@ -10,24 +10,35 @@ class Account
 
     private $AccountTerm;
 
+    private $AccountNow;
+
     private $isTermExpired;
     
     private $connect;
 
     private $AccountList;
     
-    public function __construct()
-    {
+    private $sellerID;
+
+    public function __construct($sellerID)
+    {   
+        $this->sellerID = $sellerID;
         $this->connect = new mysqli('localhost','root','','bid_account');
     }
 
-    public function getNewShuffleAccountList()
+    public function renewShuffleAccountList()
     {
         include "YahooAccount.php";
         echo "取得新的帳號列表(隨機排列)"."<br>";
         shuffle($AccountList);
         $this->AccountList = $AccountList;
-        return $this->AccountList;
+        echo "設定新的Term(過期時間）"."<br>";
+        $this->setListTerm();
+        
+    }
+    
+    private function setListTerm(){
+        $this->AccountTerm = time()+3600*24;
     }
 
     public function checkAccountListTerm()
@@ -43,11 +54,15 @@ class Account
         return $this->isTermExpired;
     }
 
-
-
-    public function loadSellerAccountList($sellerID)
+    public function saveInfoToDB()
     {
-        $take_SellerID = "SELECT * FROM `Seller_list` WHERE `sellerID`= '$sellerID'";
+        // $this->connect;
+    }
+
+    public function loadInfoFromDB()
+    {
+        
+        $take_SellerID = "SELECT * FROM `Seller_list` WHERE `sellerID`= '$this->sellerID'";
   
         $result = $this->connect->query($take_SellerID);
     }
@@ -60,6 +75,10 @@ class Account
         $this->quantityOfAccount = count($this->AccountList);
     }
 
+    public function switchToNextAccount($accountCounter)
+    {
+
+    }
 
     public function returnAccountList()
     {

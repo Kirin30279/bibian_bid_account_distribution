@@ -27,7 +27,7 @@ class Seller
 
     private function assignAccount()
     {
-        $Account = new Account();
+        $Account = new Account($this->sellerID);
         //$Account->getNewAccountShuffle();
         //$Account->switchToNextAccount();
         $Account->countAccountNumber();

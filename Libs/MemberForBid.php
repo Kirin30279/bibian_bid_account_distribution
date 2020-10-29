@@ -1,5 +1,4 @@
 <?php
-
 namespace BibianBidAccount\Libs;
 
 use BibianBidAccount\Libs\Seller;
@@ -93,7 +92,7 @@ class MemberForBid
             $this->bidFailTime += 1 ;
             echo "。。投標失敗，換帳號。。".'<Br>';
             $seller = new Seller($this->sellerID);         
-            $seller->changeToNextAccount();//換下一個輪替用的帳號
+            $seller->account->shiftToNextAccount();//換下一個輪替用的帳號
             $this->usedYahooAccount = $seller->returnYahooAccount();
 
         }

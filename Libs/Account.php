@@ -56,21 +56,6 @@ class Account
         }
     }
 
-    private function saveInfoToDB()
-    {
-        $save_Account ="";
-        // $this->connect->query($save_Account);
-    }
-
-    private function loadInfoFromDB()
-    {
-
-        $take_Account = "SELECT * FROM `Seller_list` WHERE `sellerID`= '$this->sellerID'";
-  
-        $result = $this->connect->query($take_Account);
-    }
-
-
 
     public function countAccountNumber()
     {
@@ -78,7 +63,7 @@ class Account
         $this->quantityOfAccount = count($this->AccountList);
     }
 
-    public function switchToNextAccount()
+    public function shiftToNextAccount()
     {
         echo "指定列表中的下一個帳號，計數器+1"."<BR>";
         echo "當前使用帳號為：「".$this->AccountNow."」"."<br>";
@@ -87,12 +72,20 @@ class Account
             $this->renewShuffleAccountList();
         }        
         $this->AccountNow = $this->AccountList["$this->counter"];
-        $this->counter;
+        $this->counter += 1;
         echo "指派的新使用帳號為：「".$this->AccountNow."」"."<br>";
     }
 
     public function returnAccountList()
     {
         return $this->AccountList;
+    }
+
+    private function listToString(){
+       $this->AccountList = implode(',', $this->AccountList);
+    }
+
+    private function stringToList(){
+        $this->AccountList = explode(',', $this->AccountList);
     }
 }

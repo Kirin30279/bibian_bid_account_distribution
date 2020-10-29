@@ -7,15 +7,14 @@ class Seller
 
     private $product;//競標中賣場
 
-    public $accountCounter;//指派帳號計數器
-
-    private $yahooAccount;//當前指派Yahoo帳號
-
     private $connect;//DB的連接
+
+    private $account;//class Account
 
     public function __construct($sellerID)
     {
         $this->sellerID = $sellerID;
+        $this->account = new account($this->sellerID);
         $this->connect = new mysqli('localhost','root','','bid_account');
         if ($this->isSellerExist($this->sellerID)){
             $this->loadInfoFromDB($this->sellerID);//抓DB裡面的資料來更新這次用的Seller 
@@ -23,36 +22,6 @@ class Seller
             $this->createSeller();
         }
 
-    }
-
-    private function assignAccount()
-    {
-        $Account = new Account($this->sellerID);
-        //$Account->getNewAccountShuffle();
-        //$Account->switchToNextAccount();
-        $Account->countAccountNumber();
-        $numOfAccount = $Account->AccoutnNumber;
-        $this->yahooAccount = $Account->AccountList[($this->accountCounter)%$numOfAccount];
-        $this->accountCounter += 1 ;
-    }
-
-    public function returnProduct()
-    {
-        return $this->product;
-    }
-
-    public function addProduct($product)
-    {
-        $this->product = array_push($product);
-    }
-
-    public function getAccountList($accountList)
-    {
-        $this->accountList = $accountList;
-    }
-
-    public function returnaccountCounter(){
-        return $this->accountCounter;
     }
 
     public function isSellerExist($sellerID){
@@ -72,7 +41,7 @@ class Seller
 
   
         $this->accountCounter = 0;
-        $this->assignAccount();
+        $this->account->renewShuffleAccountList();
 
         $this->product = array();
         $this->saveInfoToDB();
@@ -99,15 +68,19 @@ class Seller
     }
 
     public function returnYahooAccount(){
-        
-        return $this->yahooAccount;
+        return $this->account->AccountNow;
     }
 
-    public function changeToNextAccount()
+
+
+    public function returnProduct()
     {
-        $this->assignAccount();
-        $this->saveInfoToDB();
-        echo '賣家'.$this->sellerID.'預設帳號重新指派為:'.$this->yahooAccount.'<br>';
+        return $this->product;
+    }
+
+    public function addProduct($product)
+    {
+        $this->product = array_push($product);
     }
 
 }

@@ -6,7 +6,7 @@ use mysqli;
 class Account
 {
 
-    public $quantityOfAccount;
+    public $quantityOfAccount;//總帳號個數
 
     private $AccountTerm;
 
@@ -20,10 +20,13 @@ class Account
     
     private $sellerID;
 
+    private $counter;//指派帳號用計數器
+
     public function __construct($sellerID)
     {   
         $this->sellerID = $sellerID;
         $this->connect = new mysqli('localhost','root','','bid_account');
+        
     }
 
     public function renewShuffleAccountList()
@@ -44,27 +47,27 @@ class Account
     public function checkAccountListTerm()
     {
         echo "確認帳號列表的時間是否過期，若過期則取得新列表，未過期繼續沿用"."<br>";
-        if(0){//尚未寫入條件
+        if($this->AccountTerm<time()){//尚未寫入條件
             echo "本組帳號過期了，換帳號"."還沒寫判斷，記得補"."<br>";
             $this->isTermExpired = true;
         } else{
             echo "帳號尚未過期，沿用原先帳號列表"."還沒寫判斷，記得補"."<br>";
             $this->isTermExpired = false;
         }
-        return $this->isTermExpired;
     }
 
-    public function saveInfoToDB()
+    private function saveInfoToDB()
     {
-        // $this->connect;
+        $save_Account ="";
+        // $this->connect->query($save_Account);
     }
 
-    public function loadInfoFromDB()
+    private function loadInfoFromDB()
     {
-        
-        $take_SellerID = "SELECT * FROM `Seller_list` WHERE `sellerID`= '$this->sellerID'";
+
+        $take_Account = "SELECT * FROM `Seller_list` WHERE `sellerID`= '$this->sellerID'";
   
-        $result = $this->connect->query($take_SellerID);
+        $result = $this->connect->query($take_Account);
     }
 
 
@@ -75,9 +78,17 @@ class Account
         $this->quantityOfAccount = count($this->AccountList);
     }
 
-    public function switchToNextAccount($accountCounter)
+    public function switchToNextAccount()
     {
-
+        echo "指定列表中的下一個帳號，計數器+1"."<BR>";
+        echo "當前使用帳號為：「".$this->AccountNow."」"."<br>";
+        $this->checkAccountListTerm();
+        if ($this->isTermExpired){
+            $this->renewShuffleAccountList();
+        }        
+        $this->AccountNow = $this->AccountList["$this->counter"];
+        $this->counter;
+        echo "指派的新使用帳號為：「".$this->AccountNow."」"."<br>";
     }
 
     public function returnAccountList()

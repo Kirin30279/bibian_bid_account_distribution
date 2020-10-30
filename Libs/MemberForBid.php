@@ -110,7 +110,9 @@ class MemberForBid
     
             }
         }
-        $this->Account->saveInfoToDB();
+        if($this->bidFailTime>=1){
+            $this->Account->saveInfoToDB();    
+        }
     }
 
     private function loadInfoFromDB($memberID, $productID){

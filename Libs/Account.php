@@ -76,6 +76,7 @@ class Account
         ON DUPLICATE KEY UPDATE YahooAccountNow='$this->AccountNow', AccountCounter='$this->counter'";
         $this->connect->query($saveSellerAccountToSQL);
         var_dump($saveSellerAccountToSQL);
+        echo "<br>";
     }
 
 

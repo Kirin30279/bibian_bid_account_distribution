@@ -5,6 +5,7 @@ use BibianBidAccount\Libs\MemberForBid;
 
 //************************************************************** */
 echo "案例1".'<br>';
+
 $productID = 'T2222111150';//賣場
 $sellerID = 'seller_1111';//賣家
 $bidPrice = 95400;         //出價
@@ -72,7 +73,9 @@ if ($Member->bidSucess === false){
 }
 $Member->showBidInfo();
 echo "*********************分隔線***********************************"."<BR>";
-
+echo "效能測試區".time()."<br>";
+$i=0;
+while ($i <= 2000) {
 echo "案例4，這個案例會失敗一次後成功出價".'<br>';
 $productID = 'K849198109';//賣場
 $sellerID = 'seller_4444';//賣家
@@ -91,6 +94,9 @@ $Member->setBidStatus(array('0'=>false, '1'=>true, '2'=>true));
 
 $Member->doBid();
 $Member->showBidInfo();
+$i+=1;
+}
+echo "效能測試區".time()."<br>";
 echo "*********************分隔線***********************************"."<BR>";
 
 
@@ -116,6 +122,8 @@ if ($Member->bidSucess === false){
     echo "三次出價皆失敗"."<br>"."<br>";
 }
 $Member->showBidInfo();
+
+
 
 //************************************************************** */
 

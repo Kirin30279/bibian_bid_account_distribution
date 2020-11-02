@@ -110,7 +110,7 @@ class MemberForBid
     
             }
         }
-        if($this->bidFailTime>=1){
+        if($this->bidFailTime>=1 or !($this->isMemberExist)){
             $this->Account->saveInfoToDB();    
         }
     }

@@ -55,7 +55,7 @@
         $html .= $array['sellerID'];
         $html .= '</td>';
         $html .= '<td>';//回覆狀況↓
-        $html .= '<a href="main.php?productID='.$array['productID'].'&'.'sellerID='.$array['sellerID'].'"'.'>'.'我要投標'.'</a></td>';
+        $html .= '<a href="main.php?productID='.$array['productID'].'&'.'productTitle='.$array['productTitle'].'&'.'sellerID='.$array['sellerID'].'"'.'>'.'我要投標'.'</a></td>';
         $html .= '</tr>';
         echo $html;
         }

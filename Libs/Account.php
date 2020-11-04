@@ -10,10 +10,12 @@ class Account
     
     private $AccountNow;
    
+    private $AccountFirst;
     //private $AccountTerm;
 
     //private $isTermExpired;
-    
+    private $AccountNext;
+
     private $connect;
 
     private $AccountList;
@@ -40,19 +42,28 @@ class Account
         $this->AccountNow = $this->AccountList["$this->counter"];
         
     }
-
+    public function setAccountFirst($account){
+        $this->AccountFirst = $account;
+    }
     public function renewCountAccountNumber()
     {
         $this->quantityOfAccount = count($this->AccountList);
     }
 
     public function shiftToNextAccount()
-    {
-        echo "切換到下一個帳號"."<BR>";  
-        $selectNum = $this->counter % $this->quantityOfAccount;
-        $this->AccountNow = $this->AccountList["$selectNum"];
+    { 
         $this->counter += 1;
-        echo $this->sellerID."的新使用帳號為：「".$this->AccountNow."」"."<br>";
+        $selectNum = $this->counter % $this->quantityOfAccount;
+        $this->AccountNext = $this->AccountList["$selectNum"];
+        echo "切換到下一個帳號:"."$this->AccountNext"."<BR>"; 
+        if($this->AccountNext === $this->AccountFirst){
+            echo "輪替的下一個帳號重複，再往下繼續輪"."<BR>";
+            $this->counter += 1;
+            $selectNum = $this->counter % $this->quantityOfAccount;
+            $this->AccountNext = $this->AccountList["$selectNum"];
+        } 
+        $this->AccountNow = $this->AccountNext;
+        echo $this->sellerID."的新使用帳號為：「".$this->AccountNow."」"."<br>";        
     }
 
     public function returnAccountList()
@@ -75,7 +86,7 @@ class Account
         VALUES ('$this->sellerID', '$this->AccountNow', '$this->counter', '$listForSave')
         ON DUPLICATE KEY UPDATE YahooAccountNow='$this->AccountNow', AccountCounter='$this->counter'";
         $this->connect->query($saveSellerAccountToSQL);
-        var_dump($saveSellerAccountToSQL);
+        //var_dump($saveSellerAccountToSQL);
         echo "<br>";
     }
 
@@ -85,14 +96,13 @@ class Account
         $result = $this->connect->query($take_sellerID);
 
         if($result->num_rows===0){
-            echo "該賣家不存在，取得新帳號列表"."<br>";
+            echo "該賣家沒有指定帳號，取得新帳號列表"."<br>";
             $this->renewShuffleAccountList();
         } else{
             $row = $result -> fetch_array(MYSQLI_BOTH);
             $this->AccountNow = $row['YahooAccountNow'];
             $this->counter = $row['AccountCounter'];
             $this->AccountList = explode(',', $row['AccountList']);
-
         }
 
     }

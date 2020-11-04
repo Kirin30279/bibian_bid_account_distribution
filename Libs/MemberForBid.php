@@ -31,7 +31,7 @@ class MemberForBid
 
     public $testSucess; //拿來測試為投標成功或失敗用的參數，正式版要刪除。
 
-    public $bidFailTime;//嘗試超過3次以上則失敗
+    public $bidTime;//嘗試次數，超過3次則失敗
 
     public $bidSucess;//出價成功則外面迴圈不再出價
 
@@ -52,7 +52,7 @@ class MemberForBid
             echo "上次投標金額為：".$this->bidPrice."円<br>";
             echo "↑↑↑↑↑↑↑↑↑↑上次投標資訊↑↑↑↑↑↑↑↑↑↑"."<br>"."<br>"."<br>";
         }
-        $this->bidFailTime = 0 ;
+        $this->bidTime = 1;
         $this->bidSucess = false ;//投標成功後會改成True
     }
 
@@ -78,7 +78,7 @@ class MemberForBid
     }
 
     private function autoBid($StatusArray){
-        $this->testSucess = $StatusArray["$this->bidFailTime"];
+        $this->testSucess = $StatusArray["$this->bidTime"];
     }
 
     public function doBid()
@@ -89,13 +89,13 @@ class MemberForBid
             $this->firstBidingTime = time();
             $this->getYahooAccount();
         } 
-
+        $this->Account->setAccountFirst($this->usedYahooAccount);
         $this->renewBidingTime = time();
-        while($this->bidFailTime<3 && $this->bidSucess===false){
-            echo "本次投標使用帳號為：「".$this->usedYahooAccount."」<br>";
+        while($this->bidTime<4 && $this->bidSucess===false){
+            echo "【投標】開始投標，本次投標指定帳號為：「".$this->usedYahooAccount."」<br>";
             $this->autoBid($this->bidStatus);//測試用的函數，傳入值為成功或失敗的順序。
             if ($this->testSucess){
-                echo "※※※投標成功※※※".'<Br>'."<br>"."<br>";//成功後把投標資料寫入DB
+                echo "【投標】※※※投標成功※※※".'<Br>'."<br>"."<br>";//成功後把投標資料寫入DB
                 $this->bidSucess = true ;
                 $bidInsertSQL = "INSERT INTO 
                 bidder_list(memberID, usedYahooAccount, productID, bidPrice, sellerID, firstBidingTime, renewBidingTime, bidStatus) 
@@ -103,14 +103,17 @@ class MemberForBid
                 ON DUPLICATE KEY UPDATE usedYahooAccount='$this->usedYahooAccount', bidPrice=$this->bidPrice, renewBidingTime=$this->renewBidingTime, bidStatus=$this->finalBidOrImmediateBid";
                 $this->connect->query($bidInsertSQL);
             } else{
-                $this->bidFailTime += 1 ;
-                echo "。。投標失敗，換帳號。。".'<Br>'.'<Br>'.'<Br>';
+                $this->bidTime += 1 ;
+                echo "【投標】。。投標失敗，換帳號。。".'<Br>'.'<Br>'.'<Br>';
                 $this->Account->shiftToNextAccount();//換下一個輪替用的帳號
                 $this->usedYahooAccount = $this->Account->returnAccountNow();
     
             }
         }
-        if($this->bidFailTime>=1 or !($this->isMemberExist)){
+        if($this->bidTime===4){
+            echo "投標已達3次失敗，無法投標第4次，輪替該賣家指定帳號後，退出投標流程"."<br>";
+        }
+        if($this->bidTime>=2 or !($this->isMemberExist)){
             $this->Account->saveInfoToDB();    
         }
     }
@@ -150,14 +153,42 @@ class MemberForBid
         }
     }
 
+    private function showSucessORNot(){
+        if ($this->bidSucess === true){
+            
+            echo '<span style="color:#FF0000;">※恭喜，出價成功※!</span>'."<br>";
+        } else{
+            echo '<span style="color:#FF0000;">※很抱歉，出價失敗(連續失敗三次)，請回到商品頁面重新投標。※</span>'."<br>";
+        }
+    }
+
+    private function describeBidTime(){
+        echo "本次投標情況：";
+        switch ($this->bidTime) {
+            case '1':
+                echo "一次投標即成功"."<br>";
+                break;
+            case '2':
+                echo "一次投標失敗後，再換帳號投標成功"."<br>";
+                break;    
+            case '3':
+                echo "二次投標失敗後，再換帳號投標成功"."<br>";
+                break;     
+            case '4':
+                echo "連續三次投標失敗，投標未成功"."<br>";
+                break;  
+        }
+    }
+
     public function showBidInfo(){//程式測試演示用
         echo "投標者會員編號：".$this->memberID."<br>";
         echo "賣家ID：".$this->sellerID."<br>";
         echo $this->sellerID."當前指派的Y拍帳號：".$this->usedYahooAccount."<br>";
         echo "賣場編號：".$this->productID."<br>";
         echo "出價價格：".$this->bidPrice."円<br>";
-        echo "嘗試錯誤次數：".$this->bidFailTime."<br>";
-        echo "是否有成功出價：".$this->bidSucess."<br>";
+        echo "嘗試投標次數：".$this->bidTime."<br>";
+        $this->describeBidTime();
+        $this->showSucessORNot();
   
     }
 

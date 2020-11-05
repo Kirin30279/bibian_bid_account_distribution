@@ -81,20 +81,23 @@ class Account
 
     public function saveInfoToDB(){
         $listForSave = implode(',', $this->AccountList);
-        $saveSellerAccountToSQL="INSERT INTO 
-        Seller_list(sellerID, YahooAccountNow, AccountCounter, AccountList) 
-        VALUES ('$this->sellerID', '$this->AccountNow', '$this->counter', '$listForSave')
-        ON DUPLICATE KEY UPDATE YahooAccountNow='$this->AccountNow', AccountCounter='$this->counter'";
-        $this->connect->query($saveSellerAccountToSQL);
-        //var_dump($saveSellerAccountToSQL);
+        $stmt = $this->connect->prepare("INSERT INTO Seller_list(sellerID, YahooAccountNow, AccountCounter, AccountList) 
+                VALUES (?, ?, ?, ?)
+                ON DUPLICATE KEY UPDATE 
+                YahooAccountNow = VALUES(YahooAccountNow), 
+                AccountCounter = VALUES(AccountCounter)"); 
+        $stmt->bind_param("ssis", 
+        $this->sellerID, $this->AccountNow, $this->counter, $listForSave);
+        $stmt->execute();
         echo "<br>";
     }
 
 
     public function loadInfoFromDB(){
-        $take_sellerID = "SELECT * FROM `Seller_list` WHERE `sellerID`= '$this->sellerID'";   
-        $result = $this->connect->query($take_sellerID);
-
+        $stmt = $this->connect->prepare("SELECT * FROM `Seller_list` WHERE `sellerID`= ?");
+        $stmt->bind_param("s",$this->sellerID);
+        $stmt->execute();
+        $result = $stmt->get_result();
         if($result->num_rows===0){
             echo "該賣家沒有指定帳號，取得新帳號列表"."<br>";
             $this->renewShuffleAccountList();
@@ -104,20 +107,6 @@ class Account
             $this->counter = $row['AccountCounter'];
             $this->AccountList = explode(',', $row['AccountList']);
         }
-
     }
 
-    public function isAssignAlready(){
-        $take_SellerID = "SELECT * FROM `Seller_list` WHERE `sellerID`= '$this->sellerID'";
-        var_dump($take_SellerID);
-        $result = $this->connect->query($take_SellerID);
-        var_dump($result);
-
-        if (empty($result->num_rows)){
-            echo "該Seller為第一次被投標，等等需指定新帳號"."<BR>";
-            return false;
-        } else {
-            return true;
-        }
-    }
 }

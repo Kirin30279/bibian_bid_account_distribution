@@ -12,11 +12,11 @@ class Seller
     {
         $this->sellerID = $sellerID;
         $this->account = new account($this->sellerID);
-        if ($this->account->isAssignAlready()){
-            $this->account->loadInfoFromDB($this->sellerID);//抓DB裡面的資料來更新這次用的Seller 
-        } else{
-            $this->createSeller();
-        }
+        // if ($this->account->isAssignAlready()){
+        //     $this->account->loadInfoFromDB($this->sellerID);//抓DB裡面的資料來更新這次用的Seller 
+        // } else{
+        //     $this->createSeller();
+        // }
 
     }
 

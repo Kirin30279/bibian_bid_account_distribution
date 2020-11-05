@@ -97,11 +97,19 @@ class MemberForBid
             if ($this->testSucess){
                 echo "【投標】※※※投標成功※※※".'<Br>'."<br>"."<br>";//成功後把投標資料寫入DB
                 $this->bidSucess = true ;
-                $bidInsertSQL = "INSERT INTO 
-                bidder_list(memberID, usedYahooAccount, productID, bidPrice, sellerID, firstBidingTime, renewBidingTime, bidStatus) 
-                VALUES ($this->memberID, '$this->usedYahooAccount', '$this->productID', $this->bidPrice, '$this->sellerID', $this->firstBidingTime, $this->renewBidingTime, $this->finalBidOrImmediateBid)
-                ON DUPLICATE KEY UPDATE usedYahooAccount='$this->usedYahooAccount', bidPrice=$this->bidPrice, renewBidingTime=$this->renewBidingTime, bidStatus=$this->finalBidOrImmediateBid";
-                $this->connect->query($bidInsertSQL);
+
+                $stmt = $this->connect->prepare("INSERT INTO bidder_list(memberID, usedYahooAccount, productID, bidPrice, sellerID, firstBidingTime, renewBidingTime, bidStatus) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ON DUPLICATE KEY UPDATE 
+                usedYahooAccount = VALUES(usedYahooAccount), 
+                bidPrice = VALUES(bidPrice), 
+                renewBidingTime = VALUES(renewBidingTime), 
+                bidStatus = VALUES(bidStatus)");
+                
+                $stmt->bind_param("ississsi", 
+                $this->memberID, $this->usedYahooAccount, $this->productID, $this->bidPrice, $this->sellerID , $this->firstBidingTime, $this->renewBidingTime, $this->finalBidOrImmediateBid);
+
+                $stmt->execute();
             } else{
                 $this->bidTime += 1 ;
                 echo "【投標】。。投標失敗，換帳號。。".'<Br>'.'<Br>'.'<Br>';
@@ -119,9 +127,10 @@ class MemberForBid
     }
 
     private function loadInfoFromDB($memberID, $productID){
-        $take_memberId = "SELECT * FROM `bidder_list` WHERE `memberID`= $memberID AND `productID` = '$productID'";   
-        $result = $this->connect->query($take_memberId);
-
+        $stmt = $this->connect->prepare("SELECT * FROM `bidder_list` WHERE `memberID`= ? AND `productID` = ? ");
+        $stmt->bind_param("is", $memberID, $productID);
+        $stmt->execute();
+        $result = $stmt->get_result();
         if (empty($result->num_rows)){
             $this->isMemberExist = false;
         } else {

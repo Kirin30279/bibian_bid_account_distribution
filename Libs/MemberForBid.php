@@ -118,7 +118,7 @@ class MemberForBid
     
             }
         }
-        if($this->bidTime===4){
+        if($this->bidTime>3){
             echo "投標已達3次失敗，無法投標第4次，輪替該賣家指定帳號後，退出投標流程"."<br>";
         }
         if($this->bidTime>=2 or !($this->isMemberExist)){

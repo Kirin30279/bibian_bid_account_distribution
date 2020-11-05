@@ -8,11 +8,11 @@ $bidPrice = $_POST['bidPrice'];
 $successChoice = $_POST['success'];
 $memberID = 75744;        //會員編號
 $bidStatus = 0;           //出價狀態：最後出價、立即出價
-$Member = new MemberForBid($memberID, $productID);
+$member = new MemberForBid($memberID, $productID);
 
-$Member->setBidPrice($bidPrice);
-$Member->setFinalOrImmediate($bidStatus);
-$Member->setAccountForSeller($sellerID);
+$member->setBidPrice($bidPrice);
+$member->setFinalOrImmediate($bidStatus);
+$member->setAccountForSeller($sellerID);
 switch ($successChoice) {
     case '1s':
         $bidStatusArray = array('1'=>true, '2'=>true, '3'=>true);
@@ -28,12 +28,12 @@ switch ($successChoice) {
         break;   
 }
 
-$Member->setBidStatus($bidStatusArray);//出價成功
-// $Member->testSucess = false;//出價失敗
+$member->setBidStatus($bidStatusArray);//出價成功
+// $member->testSucess = false;//出價失敗
 
 
-$Member->doBid();
-$Member->showBidInfo();
+$member->doBid();
+$member->showBidInfo();
 
 
 ?>

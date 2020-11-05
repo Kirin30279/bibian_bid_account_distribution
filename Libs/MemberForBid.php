@@ -91,7 +91,7 @@ class MemberForBid
         } 
         $this->Account->setAccountFirst($this->usedYahooAccount);
         $this->renewBidingTime = time();
-        while($this->bidTime<=3 && $this->bidSucess===false){
+        while($this->bidTime<4 && $this->bidSucess===false){
             echo "【投標】開始投標，本次投標指定帳號為：「".$this->usedYahooAccount."」<br>";
             $this->autoBid($this->bidStatus);//測試用的函數，傳入值為成功或失敗的順序。
             if ($this->testSucess){

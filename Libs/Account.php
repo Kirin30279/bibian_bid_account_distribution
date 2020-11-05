@@ -8,17 +8,17 @@ class Account
 
     public $quantityOfAccount;//總帳號個數
     
-    private $AccountNow;
+    private $accountNow;
    
-    private $AccountFirst;
+    private $accountFirst;
     //private $AccountTerm;
 
     //private $isTermExpired;
-    private $AccountNext;
+    private $accountNext;
 
     private $connect;
 
-    private $AccountList;
+    private $accountList;
     
     private $sellerID;
 
@@ -36,43 +36,43 @@ class Account
     {
         include "YahooAccount.php";
         echo "取得新的帳號列表(隨機排列)，計數器設為0"."<br>";
-        shuffle($AccountList);
-        $this->AccountList = $AccountList;
+        shuffle($accountList);
+        $this->accountList = $accountList;
         $this->setAccountCounter(0);
-        $this->AccountNow = $this->AccountList["$this->counter"];
+        $this->accountNow = $this->accountList["$this->counter"];
         
     }
-    public function setAccountFirst($account){
-        $this->AccountFirst = $account;
+    public function setaccountFirst($account){
+        $this->accountFirst = $account;
     }
     public function renewCountAccountNumber()
     {
-        $this->quantityOfAccount = count($this->AccountList);
+        $this->quantityOfAccount = count($this->accountList);
     }
 
     public function shiftToNextAccount()
     { 
         $this->counter += 1;
         $selectNum = $this->counter % $this->quantityOfAccount;
-        $this->AccountNext = $this->AccountList["$selectNum"];
-        echo "切換到下一個帳號:"."$this->AccountNext"."<BR>"; 
-        if($this->AccountNext === $this->AccountFirst){
+        $this->accountNext = $this->accountList["$selectNum"];
+        echo "切換到下一個帳號:"."$this->accountNext"."<BR>"; 
+        if($this->accountNext === $this->accountFirst){
             echo "輪替的下一個帳號重複，再往下繼續輪"."<BR>";
             $this->counter += 1;
             $selectNum = $this->counter % $this->quantityOfAccount;
-            $this->AccountNext = $this->AccountList["$selectNum"];
+            $this->accountNext = $this->accountList["$selectNum"];
         } 
-        $this->AccountNow = $this->AccountNext;
-        echo $this->sellerID."的新使用帳號為：「".$this->AccountNow."」"."<br>";        
+        $this->accountNow = $this->accountNext;
+        echo $this->sellerID."的新使用帳號為：「".$this->accountNow."」"."<br>";        
     }
 
     public function returnAccountList()
     {
-        return $this->AccountList;
+        return $this->accountList;
     }
 
     public function returnAccountNow(){
-        return $this->AccountNow;
+        return $this->accountNow;
     }
 
     public function setAccountCounter($number){
@@ -80,14 +80,14 @@ class Account
     }
 
     public function saveInfoToDB(){
-        $listForSave = implode(',', $this->AccountList);
-        $stmt = $this->connect->prepare("INSERT INTO Seller_list(sellerID, YahooAccountNow, AccountCounter, AccountList) 
+        $listForSave = implode(',', $this->accountList);
+        $stmt = $this->connect->prepare("INSERT INTO Seller_list(sellerID, YahooAccountNow, AccountCounter, accountList) 
                 VALUES (?, ?, ?, ?)
                 ON DUPLICATE KEY UPDATE 
                 YahooAccountNow = VALUES(YahooAccountNow), 
                 AccountCounter = VALUES(AccountCounter)"); 
         $stmt->bind_param("ssis", 
-        $this->sellerID, $this->AccountNow, $this->counter, $listForSave);
+        $this->sellerID, $this->accountNow, $this->counter, $listForSave);
         $stmt->execute();
         echo "<br>";
     }
@@ -103,9 +103,9 @@ class Account
             $this->renewShuffleAccountList();
         } else{
             $row = $result -> fetch_array(MYSQLI_BOTH);
-            $this->AccountNow = $row['YahooAccountNow'];
+            $this->accountNow = $row['YahooAccountNow'];
             $this->counter = $row['AccountCounter'];
-            $this->AccountList = explode(',', $row['AccountList']);
+            $this->accountList = explode(',', $row['accountList']);
         }
     }
 

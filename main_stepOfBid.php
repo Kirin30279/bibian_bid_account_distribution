@@ -6,6 +6,8 @@ $sellerID = 'seller_1121';//賣家
 $bidPrice = 95400;         //出價
 $memberID = 75744;        //會員編號
 $bidStatus = 0;           //出價狀態：最後出價、立即出價
+
+//***************上面那區POST在處理的，預設值********************* */
 $Member = new MemberForBid($memberID, $productID);
 
 $Member->setBidPrice($bidPrice);
@@ -23,6 +25,9 @@ while ($Member->bidFailTime<3 && $Member->bidSucess === false){
     $Member->doBid($productID, $bidPrice);
 }
 
+if ($Member->bidSucess === false){
+    echo "三次出價失敗"."<BR>";
+}
 
 
 ?>

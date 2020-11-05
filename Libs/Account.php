@@ -81,11 +81,11 @@ class Account
 
     public function saveInfoToDB(){
         $listForSave = implode(',', $this->accountList);
-        $stmt = $this->connect->prepare("INSERT INTO Seller_list(sellerID, YahooAccountNow, AccountCounter, accountList) 
+        $stmt = $this->connect->prepare("INSERT INTO Seller_list(sellerID, yahooAccountNow, accountCounter, accountList) 
                 VALUES (?, ?, ?, ?)
                 ON DUPLICATE KEY UPDATE 
-                YahooAccountNow = VALUES(YahooAccountNow), 
-                AccountCounter = VALUES(AccountCounter)"); 
+                yahooAccountNow = VALUES(yahooAccountNow), 
+                accountCounter = VALUES(accountCounter)"); 
         $stmt->bind_param("ssis", 
         $this->sellerID, $this->accountNow, $this->counter, $listForSave);
         $stmt->execute();
@@ -103,8 +103,8 @@ class Account
             $this->renewShuffleAccountList();
         } else{
             $row = $result -> fetch_array(MYSQLI_BOTH);
-            $this->accountNow = $row['YahooAccountNow'];
-            $this->counter = $row['AccountCounter'];
+            $this->accountNow = $row['yahooAccountNow'];
+            $this->counter = $row['accountCounter'];
             $this->accountList = explode(',', $row['accountList']);
         }
     }

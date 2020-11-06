@@ -27,7 +27,8 @@ class Account
     public function __construct($sellerID)
     {   
         $this->sellerID = $sellerID;
-        $this->connect = new mysqli('localhost','root','','bid_account');
+        //$this->connect = new mysqli('localhost','root','','bid_account');
+        $this->connect = new mysqli('192.168.0.151','pt_wuser','pt_wuser1234','pt_develop');
         $this->loadInfoFromDB();
         $this->renewCountAccountNumber();
     }

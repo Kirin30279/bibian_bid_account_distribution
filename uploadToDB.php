@@ -38,4 +38,4 @@ $member->showBidInfo();
 
 ?>
 
-<input type="button" value="點我返回商品頁面" onclick="location.href='auctionPage.php'"class="btn btn-danger">
+<input type="button" value="點我返回商品頁面" onclick="location.href='index.php'"class="btn btn-danger">

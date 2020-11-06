@@ -24,7 +24,7 @@ echo "結標時間：".$endTime."<br>";
 
 
 <h4>請輸入投標金額並按下「出價」以完成投標出價</h4>
-<form action="bid.php" method="post" enctype="multipart/form-data">
+<form action="uploadToDB.php" method="post" enctype="multipart/form-data">
    
     <div class="form-group">
         <label>出價金額(日幣)</label>
@@ -53,7 +53,7 @@ echo "結標時間：".$endTime."<br>";
     </div>
     
     <input type="submit" value='出價' class="btn btn-primary">
-    <input type="button" value="取消" onclick="location.href='auctionPage.php'"class="btn btn-danger">
+    <input type="button" value="取消" onclick="location.href='index.php'"class="btn btn-danger">
 
 
 

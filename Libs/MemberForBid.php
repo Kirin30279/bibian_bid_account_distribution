@@ -3,6 +3,7 @@ namespace BibianBidAccount\Libs;
 
 use BibianBidAccount\Libs\Account;
 use mysqli;
+
 class MemberForBid
 {
     private $memberID;//會員編號
@@ -40,7 +41,7 @@ class MemberForBid
 
     public function __construct($memberID, $productID)
     {
-        $this->connect = new mysqli('localhost','root','','bid_account');
+        $this->connect = new mysqli('192.168.0.151','pt_wuser','pt_wuser1234','pt_develop');
         $this->loadInfoFromDB($memberID, $productID);
         //讀取DB裡面該使用者對該賣場的投標資訊，若無，則isMemberExist屬性指定為False
         if(!($this->isMemberExist)){//未投標過此賣場

@@ -1,5 +1,5 @@
 <?PHP
-$AccountList = array(
+$accountList = array(
     '0' => '帳號0',
     '1' => '帳號1',
     '2' => '帳號2',

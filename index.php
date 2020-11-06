@@ -23,7 +23,7 @@
       </thead>
       <tbody>
         <?php
-        $connect = new mysqli('localhost','root','','bid_account');
+        $connect = new mysqli('192.168.0.151','pt_wuser','pt_wuser1234','pt_develop');
         
         $query = "SELECT * FROM `product_list`  
                   WHERE `endTime` >= CURDATE() ORDER BY `endTime` ASC";
@@ -55,7 +55,7 @@
         $html .= $array['sellerID'];
         $html .= '</td>';
         $html .= '<td>';//回覆狀況↓
-        $html .= '<a href="main.php?productID='.$array['productID'].'&'.'productTitle='.$array['productTitle'].'&'.'endTime='.$array['endTime'].'&'.'sellerID='.$array['sellerID'].'"'.'>'.'我要投標'.'</a></td>';
+        $html .= '<a href="setPrice.php?productID='.$array['productID'].'&'.'productTitle='.$array['productTitle'].'&'.'endTime='.$array['endTime'].'&'.'sellerID='.$array['sellerID'].'"'.'>'.'我要投標'.'</a></td>';
         $html .= '</tr>';
         echo $html;
         }

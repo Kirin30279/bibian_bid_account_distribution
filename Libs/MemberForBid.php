@@ -111,6 +111,9 @@ class MemberForBid
                 $this->memberID, $this->usedYahooAccount, $this->productID, $this->bidPrice, $this->sellerID , $this->firstBidingTime, $this->renewBidingTime, $this->finalBidOrImmediateBid);
 
                 $stmt->execute();
+
+                $productPriceSQL = "UPDATE `product_list` SET `nowPrice` = $this->bidPrice WHERE `productID` = '$this->productID'";
+                $this->connect->query($productPriceSQL);
             } else{
                 $this->bidTime += 1 ;
                 echo "【投標】。。投標失敗，換帳號。。".'<Br>'.'<Br>'.'<Br>';

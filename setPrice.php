@@ -12,15 +12,24 @@
 <h2>以下為您本次投標的商品資訊</h2>
 <?PHP
 $productID = $_GET['productID'];//賣場
-$sellerID = $_GET['sellerID'];//賣家
-$productTitle = $_GET['productTitle'];
-$endTime = $_GET['endTime'];
-
-echo "投標賣場編號：".$productID."<br>";
-echo "投標賣家ID：".$sellerID."<br>";
-echo "投標賣場標題：".$productTitle."<br>";
-echo "結標時間：".$endTime."<br>";
-?>
+$connect = new mysqli('192.168.0.151','pt_wuser','pt_wuser1234','pt_develop');
+$productID = $connect->real_escape_string($productID);
+$query = "SELECT * FROM `product_list` WHERE `productID` = '$productID' AND `endTime` >= TIME(NOW())";
+$result = $connect->query($query);
+  if ($result->num_rows!=0){
+    $dataArray = $result->fetch_array(MYSQLI_ASSOC);
+    echo "投標賣場編號：".$productID."<br>";
+    echo "投標賣家ID：".$dataArray['sellerID']."<br>";
+    echo "投標賣場標題：".$dataArray['productTitle']."<br>";
+    echo "結標時間：".$dataArray['endTime']."<br>";
+    echo "起標價格：".$dataArray['beginPrice']."<br>";
+    echo '<span style="color:#FF0000;">'."目前價格：".$dataArray['nowPrice'].'</span>'."<br>";
+  } else{
+    echo '<span style="color:#FF0000;">'."本商品不存在或已下架，請回到商品頁面重新選擇投標商品".'</span>'."<br>";
+    echo '<input type="button" value="點我返回商品頁面" onclick="location.href=\'index.php\'">';
+    exit;
+  }
+  ?>
 
 
 <h4>請輸入投標金額並按下「出價」以完成投標出價</h4>
@@ -28,11 +37,10 @@ echo "結標時間：".$endTime."<br>";
    
     <div class="form-group">
         <label>出價金額(日幣)</label>
-        <input type="number" name="bidPrice" class="form-control" min="1" pattern="[0-9]" required >
+        <input type="number" name="bidPrice" class="form-control" min="<?php echo $dataArray['nowPrice'] ?>" pattern="[0-9]" required >
     </div>
     <input hidden type="text" name="productID" class="form-control" value="<?php echo $productID ?>">
-    <input hidden type="text" name="sellerID" class="form-control" value="<?php echo $sellerID ?>">
-    <input hidden type="text" name="productTitle" class="form-control" value="<?php echo $productTitle?>"> 
+    <input hidden type="text" name="sellerID" class="form-control" value="<?php echo $dataArray['sellerID'] ?>"> 
     <p>測試用選項：請選擇投標成功狀態</p>
     <div>
     <input type="radio" id="successChoice1"

@@ -17,6 +17,8 @@
           <td>賣場編號(productID)</td>
           <td>賣場標題(productTitle)</td>
           <td>結標時間(endTime)</td>
+          <td>起標價格</td>
+          <td>當前價格</td>
           <td>賣家ID(sellerID)</td>
           <td>投標按鈕</td>
         </tr>
@@ -51,11 +53,17 @@
         $html .= '<td>';//結標時間↓
         $html .= $array['endTime'];
         $html .= '</td>';
+        $html .= '<td>';//起標價↓
+        $html .= $array['beginPrice'];
+        $html .= '</td>';
+        $html .= '<td>';//當前價↓
+        $html .= $array['nowPrice'];
+        $html .= '</td>';
         $html .= '<td>';//賣家ID↓
         $html .= $array['sellerID'];
         $html .= '</td>';
         $html .= '<td>';//回覆狀況↓
-        $html .= '<a href="setPrice.php?productID='.$array['productID'].'&'.'productTitle='.$array['productTitle'].'&'.'endTime='.$array['endTime'].'&'.'sellerID='.$array['sellerID'].'"'.'>'.'我要投標'.'</a></td>';
+        $html .= '<a href="setPrice.php?productID='.$array['productID'].'"'.'>'.'我要投標'.'</a></td>';
         $html .= '</tr>';
         echo $html;
         }

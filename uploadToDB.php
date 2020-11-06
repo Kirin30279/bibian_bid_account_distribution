@@ -3,7 +3,6 @@ include 'config.php';
 use BibianBidAccount\Libs\MemberForBid;
 $productID = $_POST['productID'];//賣場
 $sellerID = $_POST['sellerID'];//賣家
-$productTitle = $_POST['productTitle'];
 $bidPrice = $_POST['bidPrice'];
 $successChoice = $_POST['success'];
 $memberID = 75744;        //會員編號

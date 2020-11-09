@@ -38,6 +38,10 @@ class MemberForBid
 
     public $bidStatus;//測試專用的參數，3x1的Array
 
+    private $highestNow;//是否為本標單最高投標者(要不要再加價上去？)
+
+    private $productNowPrice;
+
 
     public function __construct($memberID, $productID)
     {
@@ -98,22 +102,22 @@ class MemberForBid
             if ($this->testSucess){
                 echo "【投標】※※※投標成功※※※".'<Br>'."<br>"."<br>";//成功後把投標資料寫入DB
                 $this->bidSucess = true ;
-
-                $stmt = $this->connect->prepare("INSERT INTO bidder_list(memberID, usedYahooAccount, productID, bidPrice, sellerID, firstBidingTime, renewBidingTime, bidStatus) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                $this->compareWithOtherBidder();//更新商品價格(根據增額規則更新)
+                
+                $stmt = $this->connect->prepare("INSERT INTO bidder_list(memberID, usedYahooAccount, productID, bidPrice, sellerID, firstBidingTime, renewBidingTime, bidStatus, highestNow) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON DUPLICATE KEY UPDATE 
                 usedYahooAccount = VALUES(usedYahooAccount), 
                 bidPrice = VALUES(bidPrice), 
                 renewBidingTime = VALUES(renewBidingTime), 
-                bidStatus = VALUES(bidStatus)");
+                bidStatus = VALUES(bidStatus),
+                highestNow = VALUES(highestNow)");
                 
-                $stmt->bind_param("ississsi", 
-                $this->memberID, $this->usedYahooAccount, $this->productID, $this->bidPrice, $this->sellerID , $this->firstBidingTime, $this->renewBidingTime, $this->finalBidOrImmediateBid);
+                $stmt->bind_param("ississsii", 
+                $this->memberID, $this->usedYahooAccount, $this->productID, $this->bidPrice, $this->sellerID , $this->firstBidingTime, $this->renewBidingTime, $this->finalBidOrImmediateBid ,$this->highestNow);
 
                 $stmt->execute();
 
-                $productPriceSQL = "UPDATE `product_list` SET `nowPrice` = $this->bidPrice WHERE `productID` = '$this->productID'";
-                $this->connect->query($productPriceSQL);
             } else{
                 $this->bidTime += 1 ;
                 echo "【投標】。。投標失敗，換帳號。。".'<Br>'.'<Br>'.'<Br>';
@@ -128,6 +132,23 @@ class MemberForBid
         if($this->bidTime>=2 or !($this->isMemberExist)){
             $this->Account->saveInfoToDB();    
         }
+    }
+
+    private function judgeHighestOrNot(){
+        $this->highestNow = true;
+    }
+
+    private function increaseProductNowPrice(){
+        $selectPriceNow = "SELECT * FROM `product_list` WHERE `productID` = '$this->productID'";//抓出該商品的當前價格
+        $productResult = $this->connect->query($selectPriceNow);     
+        $productResult = $productResult -> fetch_array(MYSQLI_ASSOC);
+        $nowPrice = $productResult['nowPrice'];
+        echo "【增額】增額前價格為:".$nowPrice."円<br>";
+        $nowPrice = $this->addIncreasingValue($nowPrice);//根據Y拍規則跳增額，跳完再寫回去
+        echo "【增額】增額後，當前價格為:".$nowPrice."円<br>";
+        $updatePriceNow = "UPDATE `product_list` SET `nowPrice` = $nowPrice WHERE `productID` = '$this->productID'";
+        $this->connect->query($updatePriceNow);
+    
     }
 
     private function loadInfoFromDB($memberID, $productID){
@@ -168,8 +189,12 @@ class MemberForBid
 
     private function showSucessORNot(){
         if ($this->bidSucess === true){
-            
-            echo '<span style="color:#FF0000;">※恭喜，出價成功※!</span>'."<br>";
+            echo '<span style="color:#FF0000;">※出價成功※（出價已寫入DB）</span>'."<br>";
+            if($this->highestNow === true){
+                echo '<span style="color:#FF0000;">您目前為最高出價者</span>'."<br>";
+            }   else{
+                echo '<span style="color:#FF0000;">您的出價增額不足，請再加價</span>'."<br>";
+            }
         } else{
             echo '<span style="color:#FF0000;">※很抱歉，出價失敗(連續失敗三次)，請回到商品頁面重新投標。※</span>'."<br>";
         }
@@ -200,13 +225,85 @@ class MemberForBid
         echo "賣場編號：".$this->productID."<br>";
         echo "出價價格：".$this->bidPrice."円<br>";
         echo "嘗試投標次數：".$this->bidTime."<br>";
+        // $this->showIncreaseOrNot();
         $this->describeBidTime();
         $this->showSucessORNot();
   
     }
 
+    private function showIncreaseOrNot(){
+        if($this->highestNow == true){
+            echo "【增額】您為目前最高投標者，故本次出價時，當前價格不會上升。"."<br>";
+        }   else{
+            echo "【增額】"."<br>";
+        }
+        
+    }
+
+    private function addIncreasingValue($price){
+        switch ($price) {
+            case $price<1000:
+                $price += 10;        
+                break;    
+            case $price>=1000 && $price<5000:
+                $price += 100; 
+                break;
+            case $price>=5000 && $price<10000:
+                $price += 250; 
+                break;
+            case $price>=10000 && $price<50000:
+                $price += 500; 
+                break;
+            case $price>50000:
+                $price += 1000; 
+                break;
+        }
+        return $price ;
 }
 
+    private function compareWithOtherBidder(){
+        $selectAllBidder = "SELECT * FROM bidder_list WHERE `productID` = '$this->productID' AND `highestNow` = '1'";
+
+        $resultOldArray = $this->connect->query($selectAllBidder);
+        if($resultOldArray->num_rows===0){
+            echo "本商品尚未有人投標，本次投標者成為最高投標者，無須比較。"."<BR>";
+            $this->highestNow = true;
+        }else{
+            echo "本商品存在最高投標者，確認是否為當前投標者．．．"."<BR>";
+            $resultOldArray = $resultOldArray->fetch_all(MYSQLI_ASSOC);
+           
+            if($resultOldArray[0]['memberID'] === $this->memberID){
+                echo "本次投標者即為最高投標者，無須加價環節，直接更改該投標者金額上限。"."<BR>";
+                $this->highestNow = true;
+            }else{
+                echo "最高投標者與本次使用者不同人，進入競價環節。"."<BR>";
+                $priceNowHighest = $resultOldArray[0]['bidPrice'];
+                $priceNew = $this->bidPrice;
+                if($priceNowHighest>=$priceNew){
+                    echo "【比較結果】原先最高投標者出價大於新投標者出價。"."<BR>";
+                    $priceSaveToProductList = $priceNew;//價格被更新為較小的那個
+                    $this->highestNow = false;
+
+                } elseif($priceNew>=$this->addIncreasingValue($priceNowHighest)){
+                    echo "【比較結果】新投標者出價大於當前最高價再增額。"."<BR>";
+                    $priceSaveToProductList = $this->addIncreasingValue($priceNowHighest);//價格被更新為最高價再增額   
+                    $this->highestNow = true;
+                    $oldMemberID = $resultOldArray[0]['memberID'];
+                    $updateOldHiighest = "UPDATE `bidder_list` SET `highestNow` = 0  WHERE `productID` = '$this->productID' and `memberID` = '$oldMemberID'";
+                    $this->connect->query($updateOldHiighest);//將之前最高投標者的標記改為0。
+                } else{
+                    echo "【比較結果】新投標者出價大於當前最高價，但增額後不夠，故最高投標者不變，通知新投標者增額不足。"."<BR>";
+                    $priceSaveToProductList = $priceNowHighest;
+                    $this->highestNow = false;
+                }
+                $updatePriceNow = "UPDATE `product_list` SET `nowPrice` = $priceSaveToProductList WHERE `productID` = '$this->productID'";
+                $this->connect->query($updatePriceNow);
+            }
+        }
+        
+
+    }
+}
 
 
 ?>

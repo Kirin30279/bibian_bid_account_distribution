@@ -134,22 +134,22 @@ class MemberForBid
         }
     }
 
-    private function judgeHighestOrNot(){
-        $this->highestNow = true;
-    }
+    // private function judgeHighestOrNot(){
+    //     $this->highestNow = true;
+    // }
 
-    private function increaseProductNowPrice(){
-        $selectPriceNow = "SELECT * FROM `product_list` WHERE `productID` = '$this->productID'";//抓出該商品的當前價格
-        $productResult = $this->connect->query($selectPriceNow);     
-        $productResult = $productResult -> fetch_array(MYSQLI_ASSOC);
-        $nowPrice = $productResult['nowPrice'];
-        echo "【增額】增額前價格為:".$nowPrice."円<br>";
-        $nowPrice = $this->addIncreasingValue($nowPrice);//根據Y拍規則跳增額，跳完再寫回去
-        echo "【增額】增額後，當前價格為:".$nowPrice."円<br>";
-        $updatePriceNow = "UPDATE `product_list` SET `nowPrice` = $nowPrice WHERE `productID` = '$this->productID'";
-        $this->connect->query($updatePriceNow);
+    // private function increaseProductNowPrice(){
+    //     $selectPriceNow = "SELECT * FROM `product_list` WHERE `productID` = '$this->productID'";//抓出該商品的當前價格
+    //     $productResult = $this->connect->query($selectPriceNow);     
+    //     $productResult = $productResult -> fetch_array(MYSQLI_ASSOC);
+    //     $nowPrice = $productResult['nowPrice'];
+    //     echo "【增額】增額前價格為:".$nowPrice."円<br>";
+    //     $nowPrice = $this->addIncreasingValue($nowPrice);//根據Y拍規則跳增額，跳完再寫回去
+    //     echo "【增額】增額後，當前價格為:".$nowPrice."円<br>";
+    //     $updatePriceNow = "UPDATE `product_list` SET `nowPrice` = $nowPrice WHERE `productID` = '$this->productID'";
+    //     $this->connect->query($updatePriceNow);
     
-    }
+    // }
 
     private function loadInfoFromDB($memberID, $productID){
         $stmt = $this->connect->prepare("SELECT * FROM `bidder_list` WHERE `memberID`= ? AND `productID` = ? ");
@@ -224,6 +224,8 @@ class MemberForBid
         echo $this->sellerID."當前指派的Y拍帳號：".$this->usedYahooAccount."<br>";
         echo "賣場編號：".$this->productID."<br>";
         echo "出價價格：".$this->bidPrice."円<br>";
+        $this->getPriceNow();
+        echo "賣場當前價格：".$this->productNowPrice."円<br>";
         echo "嘗試投標次數：".$this->bidTime."<br>";
         // $this->showIncreaseOrNot();
         $this->describeBidTime();
@@ -261,6 +263,13 @@ class MemberForBid
         return $price ;
 }
 
+    private function getPriceNow(){
+        $selectProductList = "SELECT * FROM product_list WHERE `productID` = '$this->productID'";
+        $resultProductList = $this->connect->query($selectProductList);
+        $resultProductList = $resultProductList->fetch_all(MYSQLI_ASSOC);
+        $this->productNowPrice = $resultProductList[0]['nowPrice'];
+    }
+
     private function compareWithOtherBidder(){
         $selectAllBidder = "SELECT * FROM bidder_list WHERE `productID` = '$this->productID' AND `highestNow` = '1'";
 
@@ -272,11 +281,11 @@ class MemberForBid
             echo "本商品存在最高投標者，確認是否為當前投標者．．．"."<BR>";
             $resultOldArray = $resultOldArray->fetch_all(MYSQLI_ASSOC);
            
-            if($resultOldArray[0]['memberID'] === $this->memberID){
+            if($resultOldArray[0]['memberID'] == $this->memberID){
                 echo "本次投標者即為最高投標者，無須加價環節，直接更改該投標者金額上限。"."<BR>";
                 $this->highestNow = true;
             }else{
-                echo "最高投標者與本次使用者不同人，進入競價環節。"."<BR>";
+                echo "最高投標者與本次使用者不同人，進入競價環節。"."<BR>";               
                 $priceNowHighest = $resultOldArray[0]['bidPrice'];
                 $priceNew = $this->bidPrice;
                 if($priceNowHighest>=$priceNew){
@@ -296,6 +305,7 @@ class MemberForBid
                     $priceSaveToProductList = $priceNowHighest;
                     $this->highestNow = false;
                 }
+                $this->productNowPrice = $priceSaveToProductList;
                 $updatePriceNow = "UPDATE `product_list` SET `nowPrice` = $priceSaveToProductList WHERE `productID` = '$this->productID'";
                 $this->connect->query($updatePriceNow);
             }

@@ -10,17 +10,18 @@
     <h1>本頁為商品頁面，請選擇欲投標的商品</h1>
     <h4>出價成功與否需於下一頁自行選擇(一次成功、一次失敗後成功、三次失敗...等)</h4>
     <div class="m-2">
-    <table class="table table-bordered">
+    <table class="table table-bordered" >
       <thead>
         <tr>
           <td>#</td>
           <td>賣場編號(productID)</td>
-          <td>賣場標題(productTitle)</td>
+          <td style="width:50px;overflow:hidden;">賣場標題(productTitle)</td>
           <td>結標時間(endTime)</td>
           <td>起標價格</td>
           <td>當前價格</td>
           <td>賣家ID(sellerID)</td>
           <td>投標按鈕</td>
+          <td>入札履歷</td>
         </tr>
       </thead>
       <tbody>
@@ -62,8 +63,12 @@
         $html .= '<td>';//賣家ID↓
         $html .= $array['sellerID'];
         $html .= '</td>';
-        $html .= '<td>';//回覆狀況↓
+        $html .= '<td>';//投標按鈕↓
         $html .= '<a href="setPrice.php?productID='.$array['productID'].'"'.'>'.'我要投標'.'</a></td>';
+        $html .= '</td>';
+        $html .= '<td>';//入札履歷↓
+        $html .= '<a href="bidHistory.php?productID='.$array['productID'].'"'.'>'.'出價紀錄'.'</a></td>';
+        $html .= '</td>';
         $html .= '</tr>';
         echo $html;
         }

@@ -42,7 +42,12 @@ class MemberForBid
 
     private $productNowPrice;
 
+    private $productLastTimePrice;
+        
+    public $priceBeenExceed;//出價被超過
 
+    public $needHigherPrice;//增額不足
+    
     public function __construct($memberID, $productID)
     {
         $this->connect = new mysqli('192.168.0.151','pt_wuser','pt_wuser1234','pt_develop');
@@ -189,31 +194,35 @@ class MemberForBid
 
     private function showSucessORNot(){
         if ($this->bidSucess === true){
-            echo '<span style="color:#FF0000;">※出價成功※（出價已寫入DB）</span>'."<br>";
             if($this->highestNow === true){
+                echo '<span style="color:#FF0000;">※出價成功※</span>'."<br>";
                 echo '<span style="color:#FF0000;">您目前為最高出價者</span>'."<br>";
-            }   else{
-                echo '<span style="color:#FF0000;">您的出價增額不足，請再加價</span>'."<br>";
+            } else{
+                if($this->needHigherPrice != true && $this->priceBeenExceed === true){
+                    echo '<span style="color:#FF0000;">出價被超過，請再加價</span>'."<br>";   
+                }else{
+                    echo '<span style="color:#FF0000;">您的出價增額不足，請再加價</span>'."<br>";
             }
+        }
         } else{
-            echo '<span style="color:#FF0000;">※很抱歉，出價失敗(連續失敗三次)，請回到商品頁面重新投標。※</span>'."<br>";
+            echo '<span style="color:#FF0000;">※很抱歉，出價失敗，請回到商品頁面重新投標。※</span>'."<br>";
         }
     }
 
     private function describeBidTime(){
-        echo "本次投標情況：";
+        echo "帳號使用情況：";
         switch ($this->bidTime) {
             case '1':
-                echo "一次投標即成功"."<br>";
+                echo "選用第一個帳號即連上系統"."<br>";
                 break;
             case '2':
-                echo "一次投標失敗後，再換帳號投標成功"."<br>";
+                echo "第一個帳號調用失敗，使用第二個帳號連上系統"."<br>";
                 break;    
             case '3':
-                echo "二次投標失敗後，再換帳號投標成功"."<br>";
+                echo "第一、二個帳號調用失敗，使用第三個帳號連上系統"."<br>";
                 break;     
             case '4':
-                echo "連續三次投標失敗，投標未成功"."<br>";
+                echo "連續三次帳號調用失敗，投標未成功"."<br>";
                 break;  
         }
     }
@@ -270,20 +279,28 @@ class MemberForBid
         $this->productNowPrice = $resultProductList[0]['nowPrice'];
     }
 
+    private function getProductLastTimePrice(){
+        $takeProductLastTimePrice = "SELECT * FROM `product_list` WHERE `productID` = '$this->productID'";
+        $productLastTime = $this->connect->query($takeProductLastTimePrice);
+        $dataArray = $productLastTime->fetch_all(MYSQLI_ASSOC);
+        $this->productLastTimePrice = $dataArray[0]['nowPrice'];
+    }
+
     private function compareWithOtherBidder(){
         $selectAllBidder = "SELECT * FROM bidder_list WHERE `productID` = '$this->productID' AND `highestNow` = '1'";
-
-        $resultOldArray = $this->connect->query($selectAllBidder);
+        $resultOldArray = $this->connect->query($selectAllBidder);//確認一下該賣場是否有最高投標者
         if($resultOldArray->num_rows===0){
             echo "本商品尚未有人投標，本次投標者成為最高投標者，無須比較。"."<BR>";
             $this->highestNow = true;
         }else{
+            $this->getProductLastTimePrice();//取得當前價格
             echo "本商品存在最高投標者，確認是否為當前投標者．．．"."<BR>";
             $resultOldArray = $resultOldArray->fetch_all(MYSQLI_ASSOC);
            
             if($resultOldArray[0]['memberID'] == $this->memberID){
                 echo "本次投標者即為最高投標者，無須加價環節，直接更改該投標者金額上限。"."<BR>";
                 $this->highestNow = true;
+                $priceSaveToProductList = $this->bidPrice;
             }else{
                 echo "最高投標者與本次使用者不同人，進入競價環節。"."<BR>";               
                 $priceNowHighest = $resultOldArray[0]['bidPrice'];
@@ -292,10 +309,11 @@ class MemberForBid
                     echo "【比較結果】原先最高投標者出價大於新投標者出價。"."<BR>";
                     $priceSaveToProductList = $priceNew;//價格被更新為較小的那個
                     $this->highestNow = false;
+                    $this->priceBeenExceed = true;
 
                 } elseif($priceNew>=$this->addIncreasingValue($priceNowHighest)){
-                    echo "【比較結果】新投標者出價大於當前最高價再增額。"."<BR>";
-                    $priceSaveToProductList = $this->addIncreasingValue($priceNowHighest);//價格被更新為最高價再增額   
+                    echo "【比較結果】新投標者出價大於「當前最高價再增額一次」。"."<BR>";
+                    $priceSaveToProductList = $this->bidPrice;//價格被更新為最高價再增額   
                     $this->highestNow = true;
                     $oldMemberID = $resultOldArray[0]['memberID'];
                     $updateOldHiighest = "UPDATE `bidder_list` SET `highestNow` = 0  WHERE `productID` = '$this->productID' and `memberID` = '$oldMemberID'";
@@ -305,10 +323,18 @@ class MemberForBid
                     $priceSaveToProductList = $priceNowHighest;
                     $this->highestNow = false;
                 }
-                $this->productNowPrice = $priceSaveToProductList;
+            }
+            $this->productNowPrice = $priceSaveToProductList;
+            if ($this->bidPrice>=$this->addIncreasingValue($this->productLastTimePrice)){
                 $updatePriceNow = "UPDATE `product_list` SET `nowPrice` = $priceSaveToProductList WHERE `productID` = '$this->productID'";
                 $this->connect->query($updatePriceNow);
+
+            } else{
+                $this->productNowPrice = $this->productLastTimePrice;
+                $this->needHigherPrice = true;
+                $this->priceBeenExceed = false; 
             }
+
         }
         
 

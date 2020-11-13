@@ -99,11 +99,11 @@ class MemberForBid
 
         if (!($this->isMemberHasYahooAccuont())){
             echo "本使用者該訂單沒有指定Y拍帳號，取得新帳號"."<br>"."<br>";
-            $this->firstBidingTime = time();
+            $this->firstBidingTime = date("Y-m-d H:i:s");
             $this->usedYahooAccount = $this->Account->returnNewAccount();
         } 
         $this->Account->setAccountUsedArray($this->usedYahooAccountArray);//這是為了防止輪替過程又輪到最一開始失敗的那個帳號
-        $this->renewBidingTime = time();
+        $this->renewBidingTime = date("Y-m-d H:i:s");
         while($this->bidTime<4 && $this->bidSucess===false){
             echo "【投標】開始投標，本次投標指定帳號為：「".$this->usedYahooAccount."」<br>";
             $this->autoBid($this->bidStatus);//測試用的函數，傳入值為成功或失敗的順序。
@@ -111,21 +111,8 @@ class MemberForBid
                 echo "【投標】※※※投標成功※※※".'<Br>'."<br>"."<br>";//成功後把投標資料寫入DB
                 $this->bidSucess = true ;
                 $this->compareWithOtherBidder();//更新商品價格(根據增額規則更新)
-                
-                $stmt = $this->connect->prepare("INSERT INTO bidder_list(memberID, usedYahooAccount, productID, bidPrice, sellerID, firstBidingTime, renewBidingTime, bidStatus, highestNow) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ON DUPLICATE KEY UPDATE 
-                usedYahooAccount = VALUES(usedYahooAccount), 
-                bidPrice = VALUES(bidPrice), 
-                renewBidingTime = VALUES(renewBidingTime), 
-                bidStatus = VALUES(bidStatus),
-                highestNow = VALUES(highestNow)");
-                
-                $stmt->bind_param("ississsii", 
-                $this->memberID, $this->usedYahooAccount, $this->productID, $this->bidPrice, $this->sellerID , $this->firstBidingTime, $this->renewBidingTime, $this->finalBidOrImmediateBid ,$this->highestNow);
-
-                $stmt->execute();
-
+                $this->saveInfoToDB();//投標資訊寫入DB
+                $this->saveBidHistoryToDB();//入札履歷寫入DB
             } else{
                 $this->bidTime += 1 ;
                 echo "【投標】。。投標失敗，換帳號。。".'<Br>'.'<Br>'.'<Br>';
@@ -158,6 +145,33 @@ class MemberForBid
     //     $this->connect->query($updatePriceNow);
     
     // }
+
+    private function saveInfoToDB(){
+        $stmt = $this->connect->prepare("INSERT INTO bidder_list(memberID, usedYahooAccount, productID, bidPrice, sellerID, firstBidingTime, renewBidingTime, bidStatus, highestNow) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE 
+        usedYahooAccount = VALUES(usedYahooAccount), 
+        bidPrice = VALUES(bidPrice), 
+        renewBidingTime = VALUES(renewBidingTime), 
+        bidStatus = VALUES(bidStatus),
+        highestNow = VALUES(highestNow)");
+        
+        $stmt->bind_param("ississsii", 
+        $this->memberID, $this->usedYahooAccount, $this->productID, $this->bidPrice, $this->sellerID , $this->firstBidingTime, $this->renewBidingTime, $this->finalBidOrImmediateBid ,$this->highestNow);
+
+        $stmt->execute();
+    }
+
+
+    private function saveBidHistoryToDB(){
+        $stmt = $this->connect->prepare("INSERT INTO bid_histroy(memberID, usedYahooAccount, productID, bidPrice, BidingTime)
+        VALUES (?, ?, ?, ?, ?)");
+        
+        $stmt->bind_param("issis", 
+        $this->memberID, $this->usedYahooAccount, $this->productID, $this->bidPrice, $this->renewBidingTime);
+
+        $stmt->execute();
+    }
 
     private function loadInfoFromDB($memberID, $productID){
         $stmt = $this->connect->prepare("SELECT * FROM `bidder_list` WHERE `productID` = ? ");
@@ -243,7 +257,7 @@ class MemberForBid
     public function showBidInfo(){//程式測試演示用
         echo "投標者會員編號：".$this->memberID."<br>";
         echo "賣家ID：".$this->sellerID."<br>";
-        echo $this->sellerID."當前指派的Y拍帳號：".$this->usedYahooAccount."<br>";
+        echo "當前指派的Y拍帳號：".$this->usedYahooAccount."<br>";
         echo "賣場編號：".$this->productID."<br>";
         echo "出價價格：".$this->bidPrice."円<br>";
         $this->getPriceNow();

@@ -14,12 +14,24 @@
 $productID = $_GET['productID'];//賣場
 $connect = new mysqli('192.168.0.151','pt_wuser','pt_wuser1234','pt_develop');
 $productID = $connect->real_escape_string($productID);
-$query = "SELECT * FROM `product_list` WHERE `productID` = '$productID' AND `endTime` >= TIME(NOW())";
-$result = $connect->query($query);
-  if ($result->num_rows!=0){
-    $dataArray = $result->fetch_array(MYSQLI_ASSOC);
+$queryForProduct = "SELECT * FROM `product_list` WHERE `productID` = '$productID' AND `endTime` >= TIME(NOW())";
+$resultOfProduct = $connect->query($queryForProduct);
+  if ($resultOfProduct->num_rows!=0){
+    $dataArray = $resultOfProduct->fetch_array(MYSQLI_ASSOC);
+    $sellerID = $dataArray['sellerID'] ; 
+    
+    $queryForSeller = "SELECT * FROM `seller_list` WHERE `sellerID` = '$sellerID'";
+    $resultSeller = $connect->query($queryForSeller);
+
+    if ($resultSeller->num_rows!=0){
+      $sellerInfo = $resultSeller->fetch_array(MYSQLI_ASSOC);
+      $defaultBidAccount = $sellerInfo['yahooAccountNow'];
+    } else{
+      $defaultBidAccount = "本賣家為第一次投標，沒有預設帳號。";
+    }
     echo "投標賣場編號：".$productID."<br>";
-    echo "投標賣家ID：".$dataArray['sellerID']."<br>";
+    echo "投標賣家ID：".$sellerID."<br>";
+    echo "投標賣家預設帳號:".$defaultBidAccount."<br>";
     echo "投標賣場標題：".$dataArray['productTitle']."<br>";
     echo "結標時間：".$dataArray['endTime']."<br>";
     echo "起標價格：".$dataArray['beginPrice']."<br>";

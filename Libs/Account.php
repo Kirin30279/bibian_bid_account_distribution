@@ -26,8 +26,6 @@ class Account
 
     private $sellerCounter;//指派帳號用計數器，需要根據賣家帳號的表格來指派帳號
 
-    private $productCounter;//計算該賣場有多少人投標，多人競標的判斷依據
-
     private $accountQuantity;
 
     public function __construct($sellerID)
@@ -47,6 +45,7 @@ class Account
         $this->accountList = $accountList;
         $this->setSellerAccountCounter(0);
         $this->accountNow = $this->accountList["$this->sellerCounter"];
+        $this->saveInfoToDB();
         
     }
     // public function setaccountFirst($account){
@@ -98,15 +97,21 @@ class Account
         $this->sellerCounter = $number ; 
     }
 
+    private function getAccountBySellerCounter(){
+        $selectNum = $this->sellerCounter % $this->quantityOfSellerAccount;
+        return $this->accountList["$selectNum"];
+    }
+
     public function saveInfoToDB(){
         $listForSave = implode(',', $this->accountList);
+        $defaultAccount = $this->getAccountBySellerCounter();
         $stmt = $this->connect->prepare("INSERT INTO Seller_list(sellerID, yahooAccountNow, accountCounter, accountList) 
                 VALUES (?, ?, ?, ?)
                 ON DUPLICATE KEY UPDATE 
                 yahooAccountNow = VALUES(yahooAccountNow), 
                 accountCounter = VALUES(accountCounter)"); 
         $stmt->bind_param("ssis", 
-        $this->sellerID, $this->accountNow, $this->sellerCounter, $listForSave);
+        $this->sellerID, $defaultAccount, $this->sellerCounter, $listForSave);
         $stmt->execute();
         echo "<br>";
     }

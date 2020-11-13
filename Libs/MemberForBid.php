@@ -48,6 +48,8 @@ class MemberForBid
 
     public $needHigherPrice;//增額不足
     
+    private $usedYahooAccountArray;//用來儲存該賣場有多少比比昂的Y拍帳號被調用
+
     public function __construct($memberID, $productID)
     {
         $this->connect = new mysqli('192.168.0.151','pt_wuser','pt_wuser1234','pt_develop');
@@ -73,6 +75,7 @@ class MemberForBid
     public function setAccountForSeller($sellerID){
         $this->sellerID = $sellerID;
         $this->Account = new Account($this->sellerID); 
+        $this->Account->setAccountUsedArray($this->usedYahooAccountArray);
     }
 
     public function setBidPrice($bidPrice){
@@ -97,9 +100,9 @@ class MemberForBid
         if (!($this->isMemberHasYahooAccuont())){
             echo "本使用者該訂單沒有指定Y拍帳號，取得新帳號"."<br>"."<br>";
             $this->firstBidingTime = time();
-            $this->getYahooAccount();
+            $this->usedYahooAccount = $this->Account->returnNewAccount();
         } 
-        $this->Account->setAccountFirst($this->usedYahooAccount);
+        $this->Account->setAccountUsedArray($this->usedYahooAccountArray);//這是為了防止輪替過程又輪到最一開始失敗的那個帳號
         $this->renewBidingTime = time();
         while($this->bidTime<4 && $this->bidSucess===false){
             echo "【投標】開始投標，本次投標指定帳號為：「".$this->usedYahooAccount."」<br>";
@@ -157,23 +160,33 @@ class MemberForBid
     // }
 
     private function loadInfoFromDB($memberID, $productID){
-        $stmt = $this->connect->prepare("SELECT * FROM `bidder_list` WHERE `memberID`= ? AND `productID` = ? ");
-        $stmt->bind_param("is", $memberID, $productID);
+        $stmt = $this->connect->prepare("SELECT * FROM `bidder_list` WHERE `productID` = ? ");
+        $stmt->bind_param("s", $productID);
         $stmt->execute();
         $result = $stmt->get_result();
-        if (empty($result->num_rows)){
-            $this->isMemberExist = false;
-        } else {
-            $row = $result -> fetch_array(MYSQLI_BOTH);
-            $this->isMemberExist = true;
-            $this->memberID = $row['memberID'];
-            $this->usedYahooAccount = $row['usedYahooAccount'];
-            $this->bidPrice = $row['bidPrice'];
-            $this->productID = $row['productID'];
-            $this->firstBidingTime = $row['firstBidingTime'];
+        $this->usedYahooAccountArray = array();
+        if (!empty($result->num_rows)){
+            $rows = $result -> fetch_all(MYSQLI_ASSOC);
+            foreach ($rows as $row) {
+                array_push($this->usedYahooAccountArray ,$row['usedYahooAccount']);
+                if ($row['memberID'] == $memberID){
+                    $this->setMemberAttribute($row);//當前投標者以前投標過，紀錄資訊
+                }
+            }
+        } 
+        if (!isset($this->usedYahooAccount)){
+            $this->isMemberExist = false;//當前投標者至此還沒有分配帳號，表示以前他沒投標過該賣場
         }
-
     }
+
+   private function setMemberAttribute($row){
+        $this->isMemberExist = true;
+        $this->memberID = $row['memberID'];
+        $this->usedYahooAccount = $row['usedYahooAccount'];
+        $this->bidPrice = $row['bidPrice'];
+        $this->productID = $row['productID'];
+        $this->firstBidingTime = $row['firstBidingTime'];
+   }
 
     private function createNewBidder($memberID, $productID){
         $this->memberID = $memberID;
@@ -242,14 +255,6 @@ class MemberForBid
   
     }
 
-    private function showIncreaseOrNot(){
-        if($this->highestNow == true){
-            echo "【增額】您為目前最高投標者，故本次出價時，當前價格不會上升。"."<br>";
-        }   else{
-            echo "【增額】"."<br>";
-        }
-        
-    }
 
     private function addIncreasingValue($price){
         switch ($price) {

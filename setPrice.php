@@ -41,6 +41,28 @@ $result = $connect->query($query);
     </div>
     <input hidden type="text" name="productID" class="form-control" value="<?php echo $productID ?>">
     <input hidden type="text" name="sellerID" class="form-control" value="<?php echo $dataArray['sellerID'] ?>"> 
+    
+    <p>測試用選項：請選擇本次投標的會員</p>
+    <div>
+    <input type="radio" id="memberID1"
+     name="memberID" value="12345" checked="checked">
+    <label for="memberID1">會員編號:12345</label>
+
+    <input type="radio" id="memberID2"
+     name="memberID" value="75744">
+    <label for="memberID2">會員編號:75744</label>
+
+    <input type="radio" id="memberID3"
+     name="memberID" value="23456">
+    <label for="memberID3">會員編號:23456</label>
+
+    <input type="radio" id="memberID4"
+     name="memberID" value="99876">
+    <label for="memberID4">會員編號:99876</label>
+    </div>
+
+
+
     <p>測試用選項：請選擇投標成功狀態</p>
     <div>
     <input type="radio" id="successChoice1"

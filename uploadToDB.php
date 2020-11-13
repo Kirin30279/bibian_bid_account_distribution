@@ -5,7 +5,7 @@ $productID = $_POST['productID'];//賣場
 $sellerID = $_POST['sellerID'];//賣家
 $bidPrice = $_POST['bidPrice'];
 $successChoice = $_POST['success'];
-$memberID = 75744;        //會員編號
+$memberID = $_POST['memberID'];       //會員編號
 $bidStatus = 0;           //出價狀態：最後出價、立即出價
 $member = new MemberForBid($memberID, $productID);
 

@@ -21,6 +21,7 @@
           <td>當前價格</td>
           <td>賣家ID(sellerID)</td>
           <td>投標按鈕</td>
+          <td>入札者順位</td>
           <td>入札履歷</td>
         </tr>
       </thead>
@@ -65,6 +66,9 @@
         $html .= '</td>';
         $html .= '<td>';//投標按鈕↓
         $html .= '<a href="setPrice.php?productID='.$array['productID'].'"'.'>'.'我要投標'.'</a></td>';
+        $html .= '</td>';
+        $html .= '<td>';//入札者順位↓
+        $html .= '<a href="orderOfBidAccount.php?productID='.$array['productID'].'"'.'>'.'入札者順位'.'</a></td>';
         $html .= '</td>';
         $html .= '<td>';//入札履歷↓
         $html .= '<a href="bidHistory.php?productID='.$array['productID'].'"'.'>'.'出價紀錄'.'</a></td>';

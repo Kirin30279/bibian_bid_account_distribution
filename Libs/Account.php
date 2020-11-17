@@ -26,6 +26,8 @@ class Account
 
     private $sellerCounter;//指派帳號用計數器，需要根據賣家帳號的表格來指派帳號
 
+    public $sellerDefaultCounter;
+
     private $accountQuantity;
 
     public function __construct($sellerID)
@@ -43,7 +45,9 @@ class Account
         echo "取得新的帳號列表(隨機排列)，計數器設為0"."<br>";
         shuffle($accountList);
         $this->accountList = $accountList;
+        $this->renewCountAccountQuantity();
         $this->setSellerAccountCounter(0);
+
         $this->accountNow = $this->accountList["$this->sellerCounter"];
         $this->saveInfoToDB();
         
@@ -88,6 +92,8 @@ class Account
 
     public function returnNewAccount(){
         if($this->quantityOfProductAccount != 0){
+            echo "【多人投標】偵測為多人投標，故本次使用帳號不為賣家預設帳號，須從帳號清單往下選擇。"."<br>";
+            echo "【多人投標】中間若沒有出價失敗，則本賣家預設帳號依然不變"."<br>";
             $this->shiftToNextAccount();
         }
         return $this->accountNow;
@@ -95,23 +101,24 @@ class Account
 
     public function setSellerAccountCounter($number){
         $this->sellerCounter = $number ; 
+        $this->sellerDefaultCounter = $number;
     }
 
-    private function getAccountBySellerCounter(){
-        $selectNum = $this->sellerCounter % $this->quantityOfSellerAccount;
+    private function getAccountBySellerDefaultCounter(){
+        $selectNum = $this->sellerDefaultCounter % $this->quantityOfSellerAccount;
         return $this->accountList["$selectNum"];
     }
 
     public function saveInfoToDB(){
         $listForSave = implode(',', $this->accountList);
-        $defaultAccount = $this->getAccountBySellerCounter();
+        $defaultAccount = $this->getAccountBySellerDefaultCounter();
         $stmt = $this->connect->prepare("INSERT INTO Seller_list(sellerID, yahooAccountNow, accountCounter, accountList) 
                 VALUES (?, ?, ?, ?)
                 ON DUPLICATE KEY UPDATE 
                 yahooAccountNow = VALUES(yahooAccountNow), 
                 accountCounter = VALUES(accountCounter)"); 
         $stmt->bind_param("ssis", 
-        $this->sellerID, $defaultAccount, $this->sellerCounter, $listForSave);
+        $this->sellerID, $defaultAccount, $this->sellerDefaultCounter, $listForSave);
         $stmt->execute();
         echo "<br>";
     }
@@ -129,6 +136,7 @@ class Account
             $row = $result -> fetch_array(MYSQLI_BOTH);
             $this->accountNow = $row['yahooAccountNow'];
             $this->sellerCounter = $row['accountCounter'];
+            $this->sellerDefaultCounter = $row['accountCounter'];
             $this->accountList = explode(',', $row['accountList']);
         }
     }

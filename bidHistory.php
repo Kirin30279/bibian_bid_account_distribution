@@ -6,6 +6,16 @@ function showTheHighestBidder($token)
     }
 }
 
+function showBidSuccessOrFail($token)
+{
+  if($token == 0){
+    return '<span style="color:#FF0000;"><b>出價失敗</b></span>';
+  }else {
+    return '<span style="color:#00FF00;"><b>出價成功</b></span>';
+  }
+  
+
+}
 ?>
 <!DOCTYPE html>
 <html>
@@ -22,7 +32,7 @@ function showTheHighestBidder($token)
 <?PHP
 $connect = new mysqli('192.168.0.151','pt_wuser','pt_wuser1234','pt_develop');
 $productID = $connect->real_escape_string($productID);
-$query = "SELECT * FROM `bid_histroy` WHERE `productID` = '$productID' ORDER BY `bidPrice` DESC ";
+$query = "SELECT * FROM `bid_histroy` WHERE `productID` = '$productID' ORDER BY `bidPrice` DESC , `BidingTime` DESC, `memberBidTime` DESC ";
 $result = $connect->query($query);
 $bidderNumber = $result->num_rows;
   if ($bidderNumber!=0){
@@ -37,6 +47,8 @@ $bidderNumber = $result->num_rows;
           <td>使用Y拍帳號</td>
           <td>出價</td>
           <td>出價時間</td>
+          <td>出價是否成功</td>
+          <td>本次投標第n次調用帳號</td>
         </tr>
       </thead>
       <tbody>';
@@ -66,6 +78,15 @@ $bidderNumber = $result->num_rows;
         $html .= '<td>';//出價時間
         $html .= $dataArray[$i]['BidingTime'];
         $html .= '</td>';
+
+        $html .= '<td>';//出價是否成功
+        $html .= showBidSuccessOrFail($dataArray[$i]['bidSuccess']);
+        $html .= '</td>';
+
+        $html .= '<td>';//第幾次的投標紀錄
+        $html .= $dataArray[$i]['memberBidTime'];
+        $html .= '</td>';
+
         $html .= '</tr>';
         echo $html;
 

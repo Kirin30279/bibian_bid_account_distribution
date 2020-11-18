@@ -96,20 +96,19 @@ class MemberForBid
 
     public function doBid()
     {
-
+        $this->Account->setAccountUsedArray($this->usedYahooAccountArray);//這是為了防止輪替過程又輪到最一開始失敗的那個帳號
         if (!($this->isMemberHasYahooAccuont())){
             echo "本使用者該訂單沒有指定Y拍帳號，取得新帳號"."<br>"."<br>";
             $this->firstBidingTime = date("Y-m-d H:i:s");
             $this->usedYahooAccount = $this->Account->returnNewAccount();
         } 
-        $this->Account->setAccountUsedArray($this->usedYahooAccountArray);//這是為了防止輪替過程又輪到最一開始失敗的那個帳號
-
+        
         while($this->bidTime<4 && $this->bidSucess===false){
             echo "【投標】開始投標，本次投標指定帳號為：「".$this->usedYahooAccount."」<br>";
             $this->autoBid($this->bidStatus);//測試用的函數，傳入值為成功或失敗的順序。
             if ($this->testSucess){
                 $this->renewBidingTime = date("Y-m-d H:i:s");
-                echo "【投標】※※※投標成功※※※".'<Br>'."<br>"."<br>";//成功後把投標資料寫入DB
+                echo "【投標】※※※帳號可正常投標※※※".'<Br>'."<br>"."<br>";//成功後把投標資料寫入DB
                 $this->bidSucess = true ;
                 $this->compareWithOtherBidder();//更新商品價格(根據增額規則更新)
                 $this->saveInfoToDB();//投標資訊寫入DB
@@ -118,6 +117,7 @@ class MemberForBid
                 $this->renewBidingTime = date("Y-m-d H:i:s");
                 $this->saveBidHistoryToDB();//入札履歷寫入DB
                 $this->bidTime += 1 ;
+                $this->Account->addCounterOfSeller();
                 echo "【投標】。。投標失敗，換帳號。。".'<Br>'.'<Br>'.'<Br>';
                 $this->Account->shiftToNextAccount();//換下一個輪替用的帳號
                 $this->Account->sellerDefaultCounter += 1 ;

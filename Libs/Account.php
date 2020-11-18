@@ -66,19 +66,31 @@ class Account
         $this->quantityOfSellerAccount = count($this->accountList);
     }
 
+    public function addCounterOfSeller(){
+        $this->sellerCounter += 1;
+    }
+
     public function shiftToNextAccount()
     { 
         $this->sellerCounter += 1;
         $selectNum = ($this->sellerCounter + $this->quantityOfProductAccount) % $this->quantityOfSellerAccount;
         $this->accountNext = $this->accountList["$selectNum"];
         echo "切換到下一個帳號:"."$this->accountNext"."<BR>"; 
-        while (in_array($this->accountNext, $this->accountUsedArray)) {
+        while ($this->isAccountUsed($this->accountNext)) {
             echo "輪替的帳號".$this->accountNext."於該賣場已被使用，再往下繼續輪"."<BR>";
             $selectNum = ($selectNum + 1) % $this->quantityOfSellerAccount;
             $this->accountNext = $this->accountList["$selectNum"];
         }
         $this->accountNow = $this->accountNext;
         echo $this->sellerID."的新使用帳號為：「".$this->accountNow."」"."<br>";        
+    }
+
+    private function isAccountUsed($account){
+        if (in_array($account, $this->accountUsedArray)){
+            return true;
+        } else{
+            return false;
+        }
     }
 
     public function returnAccountList()
@@ -90,12 +102,13 @@ class Account
         return $this->accountNow;
     }
 
-    public function returnNewAccount(){
-        if($this->quantityOfProductAccount != 0){
+    public function returnNewAccount(){//用在使用者該訂單並沒有分配到帳號時
+        if($this->quantityOfProductAccount != 0 && $this->isAccountUsed($this->accountNow)){
             echo "【多人投標】偵測為多人投標，故本次使用帳號不為賣家預設帳號，須從帳號清單往下選擇。"."<br>";
             echo "【多人投標】中間若沒有出價失敗，則本賣家預設帳號依然不變"."<br>";
             $this->shiftToNextAccount();
         }
+
         return $this->accountNow;
     }
 

@@ -121,8 +121,8 @@ class MemberForBid
                 $this->renewBidingTime = date("Y-m-d H:i:s");
                 echo "【投標】※※※帳號可正常投標※※※".'<Br>'."<br>"."<br>";//成功後把投標資料寫入DB
                 $this->bidSucess = true ;
-                $this->compareWithOtherBidder();//更新商品價格(根據增額規則更新)
-                $this->actByBidResult();
+                $this->compareWithOtherBidder();//與之前最高出價者做比較
+                $this->actByBidResult();//根據上面比較出來的結果動作
                 $this->saveInfoToDB();//投標資訊寫入DB
                 $this->saveBidHistoryToDB();//入札履歷寫入DB
 

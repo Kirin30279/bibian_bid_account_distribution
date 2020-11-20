@@ -9,17 +9,13 @@ class MemberForBid
 {
     private $memberID;//會員編號
 
-    private $OldMember;
-
-    private $lastTimeHighestMember;
+    private $OldMember;//之前投標的會員資料
 
     private $usedYahooAccount;//目前指派的Y拍帳號
 
     private $productID;//這次出價的賣場編號
 
     private $bidPrice;//這次出價的價格
-
-    private $priceNowHighest;
 
     private $finalBidOrImmediateBid;//這次出價的狀態(立即or最後出)
 
@@ -28,8 +24,6 @@ class MemberForBid
     private $renewBidingTime;//該使用者最後一次出價的時間
 
     private $sellerID;//賣家ID
-
-    private $seller;
 
     //判斷該使用者是否已經對該賣場投標過，若有，則先用原本使用投標帳號，
     //↓除非投標失敗，才會指定到該賣家新帳號
@@ -47,19 +41,13 @@ class MemberForBid
 
     private $highestNow;//是否為本標單最高投標者(要不要再加價上去？)
 
-    private $productNowPrice;
-
-    private $productLastTimePrice;
+    private $productNowPrice;//賣場當前價格，顯示用
         
-    public $priceBeenExceed;//出價被超過
-
-    //public $needHigherPrice;//增額不足
-    
     private $usedYahooAccountArray;//用來儲存該賣場有多少比比昂的Y拍帳號被調用
 
-    private $bidResult;
+    private $bidResult;//儲存投標比較的結果
 
-    private $finalDisplayStatus;
+    private $finalDisplayStatus;//最後顯示結果的判斷依據
 
     public function __construct($memberID, $productID)
     {
@@ -77,7 +65,30 @@ class MemberForBid
         }
         $this->bidTime = 1;
         $this->bidSucess = false ;//投標成功後會改成True
+        $this->finalDisplayStatus = 'fail' ;//最後判斷的時候會更改這個狀態
     }
+    
+    private function isMemberHasYahooAccuont(){
+        if(isset($this->usedYahooAccount)){
+            return true;
+        } else{
+            return false;
+        }
+    }
+
+    private function createNewBidder($memberID, $productID){
+        $this->memberID = $memberID;
+        $this->productID = $productID;
+    }
+
+    private function setMemberAttribute($row){
+        $this->isMemberExist = true;
+        $this->memberID = $row['memberID'];
+        $this->usedYahooAccount = $row['usedYahooAccount'];
+        $this->bidPrice = $row['bidPrice'];
+        $this->productID = $row['productID'];
+        $this->firstBidingTime = $row['firstBidingTime'];
+   }
 
     public function setBidStatus($array){
         $this->bidStatus = $array;
@@ -95,10 +106,6 @@ class MemberForBid
 
     public function setFinalOrImmediate($finalBidOrImmediateBid){
         $this->finalBidOrImmediateBid = $finalBidOrImmediateBid;
-    }
-
-    public function echoYahooAccuount(){
-        echo "目前使用的帳戶是：".$this->usedYahooAccount."<BR>";
     }
 
     private function autoBid($StatusArray){
@@ -148,203 +155,11 @@ class MemberForBid
         }
     }
 
-    // private function judgeHighestOrNot(){
-    //     $this->highestNow = true;
-    // }
-
-    // private function increaseProductNowPrice(){
-    //     $selectPriceNow = "SELECT * FROM `product_list` WHERE `productID` = '$this->productID'";//抓出該商品的當前價格
-    //     $productResult = $this->connect->query($selectPriceNow);     
-    //     $productResult = $productResult -> fetch_array(MYSQLI_ASSOC);
-    //     $nowPrice = $productResult['nowPrice'];
-    //     echo "【增額】增額前價格為:".$nowPrice."円<br>";
-    //     $nowPrice = $this->addIncreasingValue($nowPrice);//根據Y拍規則跳增額，跳完再寫回去
-    //     echo "【增額】增額後，當前價格為:".$nowPrice."円<br>";
-    //     $updatePriceNow = "UPDATE `product_list` SET `nowPrice` = $nowPrice WHERE `productID` = '$this->productID'";
-    //     $this->connect->query($updatePriceNow);
-    
-    // }
-
-    private function saveInfoToDB(){
-        $stmt = $this->connect->prepare("INSERT INTO bidder_list(memberID, usedYahooAccount, productID, bidPrice, sellerID, firstBidingTime, renewBidingTime, bidStatus, highestNow) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ON DUPLICATE KEY UPDATE 
-        usedYahooAccount = VALUES(usedYahooAccount), 
-        bidPrice = VALUES(bidPrice), 
-        renewBidingTime = VALUES(renewBidingTime), 
-        bidStatus = VALUES(bidStatus),
-        highestNow = VALUES(highestNow)");
-        
-        $this->checkHighestOrNot();
-        $stmt->bind_param("ississsii", 
-        $this->memberID, $this->usedYahooAccount, $this->productID, $this->bidPrice, $this->sellerID , $this->firstBidingTime, $this->renewBidingTime, $this->finalBidOrImmediateBid ,$this->highestNow);
-        
-        $stmt->execute();
-    }
-    private function checkHighestOrNot(){
-        if ($this->finalDisplayStatus === 'success'){
-            $this->highestNow = 1;
-        }elseif($this->bidResult == 'thisBidderWasHighestButIllegal') {
-            $this->highestNow = 1;
-        }else{
-            $this->highestNow = 0;
-        }
-    }
-
-    private function saveBidHistoryToDB(){
-        $stmt = $this->connect->prepare("INSERT INTO bid_histroy(memberID, usedYahooAccount, productID, bidPrice, BidingTime ,bidSuccess , memberBidTime)
-        VALUES (?, ?, ?, ?, ?, ?, ?)");
-        $bidSucess = intval($this->bidSucess);
-        $stmt->bind_param("issisii", 
-        $this->memberID, $this->usedYahooAccount, $this->productID, $this->bidPrice, $this->renewBidingTime, $bidSucess , $this->bidTime);
-
-        $stmt->execute();
-    }
-
-    private function loadInfoFromDB($memberID, $productID){
-        $stmt = $this->connect->prepare("SELECT * FROM `bidder_list` WHERE `productID` = ? ");
-        $stmt->bind_param("s", $productID);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $this->usedYahooAccountArray = array();
-        if (!empty($result->num_rows)){
-            $rows = $result -> fetch_all(MYSQLI_ASSOC);
-            foreach ($rows as $row) {
-                array_push($this->usedYahooAccountArray ,$row['usedYahooAccount']);
-                if ($row['memberID'] == $memberID){
-                    $this->setMemberAttribute($row);//當前投標者以前投標過，紀錄資訊
-                }
-            }
-        } 
-        if (!isset($this->usedYahooAccount)){
-            $this->isMemberExist = false;//當前投標者至此還沒有分配帳號，表示以前他沒投標過該賣場
-        }
-    }
-
-   private function setMemberAttribute($row){
-        $this->isMemberExist = true;
-        $this->memberID = $row['memberID'];
-        $this->usedYahooAccount = $row['usedYahooAccount'];
-        $this->bidPrice = $row['bidPrice'];
-        $this->productID = $row['productID'];
-        $this->firstBidingTime = $row['firstBidingTime'];
-   }
-
-    private function createNewBidder($memberID, $productID){
-        $this->memberID = $memberID;
-        $this->productID = $productID;
-    }
-
-    private function getYahooAccount(){//取得賣家當前指派帳號
-        $this->usedYahooAccount = $this->Account->returnAccountNow();
-    }
-
-    private function isMemberHasYahooAccuont(){
-        if(isset($this->usedYahooAccount)){
-            return true;
-        } else{
-            return false;
-        }
-    }
-
-    private function showSucessORNot(){
-        if ($this->bidSucess === true){
-            switch ($this->finalDisplayStatus) {
-                case 'success':
-                    echo '<span style="color:#FF0000;">※出價成功※</span>'."<br>";
-                    echo '<span style="color:#FF0000;">您目前為最高出價者</span>'."<br>";
-                    break;
-
-                case 'fail':
-                    echo '<span style="color:#FF0000;">出價被超過，請再加價</span>'."<br>";   
-                    break;
-
-                case 'increseInsufficient':
-                    echo '<span style="color:#FF0000;">您的出價增額不足，請再加價</span>'."<br>";
-                    break;
-                
-                default:
-                    echo '意外狀況，請檢查CODE';
-                    break;
-            }
-        } else{
-            echo '<span style="color:#FF0000;">※很抱歉，出價失敗，請回到商品頁面重新投標。※</span>'."<br>";
-        }
-    }
-
-    private function describeBidTime(){
-        echo "帳號使用情況：";
-        switch ($this->bidTime) {
-            case '1':
-                echo "選用第一個帳號即連上系統"."<br>";
-                break;
-            case '2':
-                echo "第一個帳號調用失敗，使用第二個帳號連上系統"."<br>";
-                break;    
-            case '3':
-                echo "第一、二個帳號調用失敗，使用第三個帳號連上系統"."<br>";
-                break;     
-            case '4':
-                echo "連續三次帳號調用失敗，投標未成功"."<br>";
-                break;  
-        }
-    }
-
-    public function showBidInfo(){//程式測試演示用
-        echo "投標者會員編號：".$this->memberID."<br>";
-        echo "賣家ID：".$this->sellerID."<br>";
-        echo "當前指派的Y拍帳號：".$this->usedYahooAccount."<br>";
-        echo "賣場編號：".$this->productID."<br>";
-        echo "出價價格：".$this->bidPrice."円<br>";
-        $this->getPriceNow();
-        echo "賣場當前價格：".$this->productNowPrice."円<br>";
-        echo "嘗試投標次數：".$this->bidTime."<br>";
-        // $this->showIncreaseOrNot();
-        $this->describeBidTime();
-        $this->showSucessORNot();
-  
-    }
-
-
-    private function addIncreasingValue($price){
-        switch ($price) {
-            case $price<1000:
-                $price += 10;        
-                break;    
-            case $price>=1000 && $price<5000:
-                $price += 100; 
-                break;
-            case $price>=5000 && $price<10000:
-                $price += 250; 
-                break;
-            case $price>=10000 && $price<50000:
-                $price += 500; 
-                break;
-            case $price>50000:
-                $price += 1000; 
-                break;
-        }
-        return $price ;
-}
-
-    private function getPriceNow(){
-        $selectProductList = "SELECT * FROM product_list WHERE `productID` = '$this->productID'";
-        $resultProductList = $this->connect->query($selectProductList);
-        $resultProductList = $resultProductList->fetch_all(MYSQLI_ASSOC);
-        $this->productNowPrice = $resultProductList[0]['nowPrice'];
-    }
-
-    private function getProductLastTimePrice(){
-        $takeProductLastTimePrice = "SELECT * FROM `product_list` WHERE `productID` = '$this->productID'";
-        $productLastTime = $this->connect->query($takeProductLastTimePrice);
-        $dataArray = $productLastTime->fetch_all(MYSQLI_ASSOC);
-        $this->OldMember->bidPrice = $dataArray[0]['nowPrice'];
-    }
-
     private function compareWithOtherBidder(){
         //這邊僅能做投標的狀態分析
         $this->OldMember = new MemberLastTime($this->productID);
-        $this->getProductLastTimePrice();//取得當前賣場價格
+        $this->OldMember->bidPrice = $this->returnPriceNow();
+        //$this->getProductLastTimePrice();//取得當前賣場價格
         if($this->OldMember->thereIsNoLastBidder){
             $this->bidResult = 'firstOneInThisProduct';
         }else{
@@ -435,11 +250,170 @@ class MemberForBid
         } else{
             $this->productNowPrice = $this->OldMember->bidPrice;
             $this->finalDisplayStatus = 'increseInsufficient';
-            //$this->needHigherPrice = true;
-            //$this->priceBeenExceed = false; 
         }
         
     }
+
+    private function saveInfoToDB(){
+        $stmt = $this->connect->prepare("INSERT INTO bidder_list(memberID, usedYahooAccount, productID, bidPrice, sellerID, firstBidingTime, renewBidingTime, bidStatus, highestNow) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE 
+        usedYahooAccount = VALUES(usedYahooAccount), 
+        bidPrice = VALUES(bidPrice), 
+        renewBidingTime = VALUES(renewBidingTime), 
+        bidStatus = VALUES(bidStatus),
+        highestNow = VALUES(highestNow)");
+        
+        $this->checkHighestOrNot();
+        $stmt->bind_param("ississsii", 
+        $this->memberID, $this->usedYahooAccount, $this->productID, $this->bidPrice, $this->sellerID , $this->firstBidingTime, $this->renewBidingTime, $this->finalBidOrImmediateBid ,$this->highestNow);
+        
+        $stmt->execute();
+    }
+
+    private function loadInfoFromDB($memberID, $productID){
+        $stmt = $this->connect->prepare("SELECT * FROM `bidder_list` WHERE `productID` = ? ");
+        $stmt->bind_param("s", $productID);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $this->usedYahooAccountArray = array();
+        if (!empty($result->num_rows)){
+            $rows = $result -> fetch_all(MYSQLI_ASSOC);
+            foreach ($rows as $row) {
+                array_push($this->usedYahooAccountArray ,$row['usedYahooAccount']);
+                if ($row['memberID'] == $memberID){
+                    $this->setMemberAttribute($row);//當前投標者以前投標過，紀錄資訊
+                }
+            }
+        } 
+        if (!isset($this->usedYahooAccount)){
+            $this->isMemberExist = false;//當前投標者至此還沒有分配帳號，表示以前他沒投標過該賣場
+        }
+    }
+
+    private function saveBidHistoryToDB(){
+        $stmt = $this->connect->prepare("INSERT INTO bid_histroy(memberID, usedYahooAccount, productID, bidPrice, BidingTime ,bidSuccess , memberBidTime)
+        VALUES (?, ?, ?, ?, ?, ?, ?)");
+        $bidSucess = $this->checkSuccessWithFinalStatus() ;
+        $stmt->bind_param("issisii", 
+        $this->memberID, $this->usedYahooAccount, $this->productID, $this->bidPrice, $this->renewBidingTime, $bidSucess , $this->bidTime);
+
+        $stmt->execute();
+    }
+
+    private function checkSuccessWithFinalStatus(){
+        if ($this->finalDisplayStatus == 'success') {
+            $bidSucess = 1;
+        }else{
+            $bidSucess = 0; 
+        }
+        return $bidSucess;
+    }
+
+    private function checkHighestOrNot(){
+        if ($this->finalDisplayStatus === 'success'){
+            $this->highestNow = 1;
+        }elseif($this->bidResult == 'thisBidderWasHighestButIllegal') {
+            $this->highestNow = 1;
+        }else{
+            $this->highestNow = 0;
+        }
+    }
+
+    private function showSucessORNot(){
+        if ($this->bidSucess === true){
+            switch ($this->finalDisplayStatus) {
+                case 'success':
+                    echo '<span style="color:#FF0000;">※出價成功※</span>'."<br>";
+                    echo '<span style="color:#FF0000;">您目前為最高出價者</span>'."<br>";
+                    break;
+
+                case 'fail':
+                    echo '<span style="color:#FF0000;">出價被超過，請再加價</span>'."<br>";   
+                    break;
+
+                case 'increseInsufficient':
+                    echo '<span style="color:#FF0000;">您的出價增額不足，請再加價</span>'."<br>";
+                    break;
+                
+                default:
+                    echo '意外狀況，請檢查CODE';
+                    break;
+            }
+        } else{
+            echo '<span style="color:#FF0000;">※很抱歉，出價失敗，請回到商品頁面重新投標。※</span>'."<br>";
+        }
+    }
+
+    private function describeBidTime(){
+        echo "帳號使用情況：";
+        switch ($this->bidTime) {
+            case '1':
+                echo "選用第一個帳號即連上系統"."<br>";
+                break;
+            case '2':
+                echo "第一個帳號調用失敗，使用第二個帳號連上系統"."<br>";
+                break;    
+            case '3':
+                echo "第一、二個帳號調用失敗，使用第三個帳號連上系統"."<br>";
+                break;     
+            case '4':
+                echo "連續三次帳號調用失敗，投標未成功"."<br>";
+                break;  
+        }
+    }
+
+    public function showBidInfo(){//程式測試演示用
+        echo "投標者會員編號：".$this->memberID."<br>";
+        echo "賣家ID：".$this->sellerID."<br>";
+        echo "當前指派的Y拍帳號：".$this->usedYahooAccount."<br>";
+        echo "賣場編號：".$this->productID."<br>";
+        echo "出價價格：".$this->bidPrice."円<br>";
+        echo "賣場當前價格：".$this->returnPriceNow()."円<br>";
+        echo "嘗試投標次數：".$this->bidTime."<br>";
+        // $this->showIncreaseOrNot();
+        $this->describeBidTime();
+        $this->showSucessORNot();
+  
+    }
+
+
+    private function addIncreasingValue($price){
+        switch ($price) {
+            case $price<1000:
+                $price += 10;        
+                break;    
+            case $price>=1000 && $price<5000:
+                $price += 100; 
+                break;
+            case $price>=5000 && $price<10000:
+                $price += 250; 
+                break;
+            case $price>=10000 && $price<50000:
+                $price += 500; 
+                break;
+            case $price>50000:
+                $price += 1000; 
+                break;
+        }
+        return $price ;
+}
+
+    private function returnPriceNow(){
+        $selectProductList = "SELECT * FROM product_list WHERE `productID` = '$this->productID'";
+        $resultProductList = $this->connect->query($selectProductList);
+        $resultProductList = $resultProductList->fetch_all(MYSQLI_ASSOC);
+        return $resultProductList[0]['nowPrice'];
+    }
+
+    // private function getProductLastTimePrice(){
+    //     $takeProductLastTimePrice = "SELECT * FROM `product_list` WHERE `productID` = '$this->productID'";
+    //     $productLastTime = $this->connect->query($takeProductLastTimePrice);
+    //     $dataArray = $productLastTime->fetch_all(MYSQLI_ASSOC);
+    //     $this->OldMember->bidPrice = $dataArray[0]['nowPrice'];
+    // }
+
+
 }
 
 

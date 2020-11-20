@@ -22,7 +22,7 @@ class MemberLastTime{
             $this->thereIsNoLastBidder = false;
             $resultOldArray = $resultOldArray->fetch_all(MYSQLI_ASSOC);
             $this->memberID = $resultOldArray[0]['memberID'];
-            $this->bidPrice = $resultOldArray[0]['bidPrice'];
+            $this->bidPrice = $resultOldArray[0]['bidPrice'];//這裡取得的是當前最高投標者的投標金額
         }
     }
 

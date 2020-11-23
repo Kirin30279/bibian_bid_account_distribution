@@ -126,8 +126,12 @@ class MemberForBid
                 $this->bidSuccess = true ;
                 $this->compareWithOtherBidder();//與之前最高出價者做比較
                 $this->actByBidResult();//根據上面比較出來的結果動作
-                $this->saveInfoToDB();//投標資訊寫入DB
                 $this->saveBidHistoryToDB();
+                if($this->finalDisplayStatus == 'success'){
+                    echo "【投標】投標成功，將投標資訊寫入DB"."<br>";
+                    $this->saveInfoToDB();//投標資訊寫入DB
+                }
+                
 
             } else{
                 $this->renewBidingTime = date("Y-m-d H:i:s");
@@ -183,7 +187,6 @@ class MemberForBid
 
     }
     
-
 
     private function actByBidResult(){
             

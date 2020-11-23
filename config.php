@@ -6,4 +6,5 @@ include "Libs/MemberForBid.php";
 include "Libs/YahooAccount.php";
 include "Libs/Account.php";
 include "Libs/MemberLastTime.php";
+include "Libs/ResultAnnouncer.php";
 ?>

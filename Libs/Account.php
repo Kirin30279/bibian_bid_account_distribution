@@ -10,12 +10,8 @@ class Account
     
     private $accountNow;
    
-    //private $accountFirst;
-    //private $AccountTerm;
-
     private $accountUsedArray;
 
-    //private $isTermExpired;
     private $accountNext;
 
     private $connect;
@@ -27,8 +23,6 @@ class Account
     private $sellerCounter;//指派帳號用計數器，需要根據賣家帳號的表格來指派帳號
 
     public $sellerDefaultCounter;
-
-    private $accountQuantity;
 
     public function __construct($sellerID)
     {   
@@ -52,9 +46,6 @@ class Account
         $this->saveInfoToDB();
         
     }
-    // public function setaccountFirst($account){
-    //     $this->accountFirst = $account;
-    // }
 
     public function setAccountUsedArray($accountArray){
         $this->accountUsedArray = $accountArray;

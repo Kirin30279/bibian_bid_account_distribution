@@ -1,6 +1,7 @@
 <?PHP
 include 'config.php';
 use BibianBidAccount\Libs\MemberForBid;
+use BibianBidAccount\Libs\ResultAnnouncer;
 $productID = $_POST['productID'];//賣場
 $sellerID = $_POST['sellerID'];//賣家
 $bidPrice = $_POST['bidPrice'];
@@ -27,12 +28,11 @@ switch ($successChoice) {
         break;   
 }
 
-$member->setBidStatus($bidStatusArray);//出價成功
-// $member->testSucess = false;//出價失敗
-
+$member->setBidStatus($bidStatusArray);
 
 $member->doBid();
-$member->showBidInfo();
+$Announcer = new ResultAnnouncer($member->sendBidInfoForAnnouncer());
+$Announcer->showBidInfo();
 
 
 ?>

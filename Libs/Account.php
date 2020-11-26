@@ -129,10 +129,6 @@ class Account
 
 
     public function loadInfoFromDB(){
-        // $stmt = $this->connect->prepare("SELECT * FROM `Seller_list` WHERE `sellerID`= ?");
-        // $stmt->bind_param("s",$this->sellerID);
-        // $stmt->execute();
-        // $result = $stmt->get_result();
         $result = $this->DataBaseHandler->loadSellerDefaultAccount($this->sellerID);
         if($result->num_rows===0){
             echo "該賣家沒有指定帳號，取得新帳號列表"."<br>";

@@ -1,11 +1,4 @@
 <?PHP
-function showTheHighestBidder($token)
-{
-    if($token == 1){
-        return '<span style="color:#FF0000;"><b>最高出價者</b></span>';
-    }
-}
-
 function showBidSuccessOrFail($token)
 {
   if($token == 0){
@@ -13,10 +6,9 @@ function showBidSuccessOrFail($token)
   }else {
     return '<span style="color:#00FF00;"><b>出價成功</b></span>';
   }
-  
-
 }
 ?>
+
 <!DOCTYPE html>
 <html>
 

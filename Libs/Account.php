@@ -1,6 +1,7 @@
 <?PHP
 namespace BibianBidAccount\Libs;
 
+use BibianBidAccount\Libs\DB\DataBaseHandler;
 use mysqli;
 
 class Account
@@ -27,8 +28,8 @@ class Account
     public function __construct($sellerID)
     {   
         $this->sellerID = $sellerID;
-        //$this->connect = new mysqli('localhost','root','','bid_account');
         $this->connect = new mysqli('192.168.0.151','pt_wuser','pt_wuser1234','pt_develop');
+        $this->DataBaseHandler = new DataBaseHandler();
         $this->loadInfoFromDB();
         $this->renewCountAccountQuantity();
     }
@@ -68,8 +69,9 @@ class Account
         $this->accountNext = $this->accountList["$selectNum"];
         echo "切換到下一個帳號:"."$this->accountNext"."<BR>"; 
         while ($this->isAccountUsed($this->accountNext)) {
+            $this->addCounterOfSeller();
             echo "輪替的帳號".$this->accountNext."於該賣場已被使用，再往下繼續輪"."<BR>";
-            $selectNum = ($selectNum + 1) % $this->quantityOfSellerAccount;
+            $selectNum = ($this->sellerCounter + $this->quantityOfProductAccount) % $this->quantityOfSellerAccount;
             $this->accountNext = $this->accountList["$selectNum"];
         }
         $this->accountNow = $this->accountNext;
@@ -95,7 +97,7 @@ class Account
 
     public function returnNewAccount(){//用在使用者該訂單並沒有分配到帳號時
         if($this->quantityOfProductAccount != 0 && $this->isAccountUsed($this->accountNow)){
-            echo "【多人投標】偵測為多人投標，故本次使用帳號不為賣家預設帳號，須從帳號清單往下選擇。"."<br>";
+            echo "【多人投標】偵測為多人投標，故本次使用帳號不一定為賣家預設帳號，須從帳號清單往下選擇。"."<br>";
             echo "【多人投標】中間若沒有出價失敗，則本賣家預設帳號依然不變"."<br>";
             $this->shiftToNextAccount();
         }
@@ -116,23 +118,18 @@ class Account
     public function saveInfoToDB(){
         $listForSave = implode(',', $this->accountList);
         $defaultAccount = $this->getAccountBySellerDefaultCounter();
-        $stmt = $this->connect->prepare("INSERT INTO Seller_list(sellerID, yahooAccountNow, accountCounter, accountList) 
-                VALUES (?, ?, ?, ?)
-                ON DUPLICATE KEY UPDATE 
-                yahooAccountNow = VALUES(yahooAccountNow), 
-                accountCounter = VALUES(accountCounter)"); 
-        $stmt->bind_param("ssis", 
-        $this->sellerID, $defaultAccount, $this->sellerDefaultCounter, $listForSave);
-        $stmt->execute();
-        echo "<br>";
+        $dataArray = array(
+            'sellerID' => "$this->sellerID",
+            'yahooAccountNow' => "$defaultAccount",
+            'accountCounter' => "$this->sellerDefaultCounter",
+            'accountList' => $listForSave
+        );
+        $this->DataBaseHandler->saveSellerDefaultAccount($dataArray);
     }
 
 
     public function loadInfoFromDB(){
-        $stmt = $this->connect->prepare("SELECT * FROM `Seller_list` WHERE `sellerID`= ?");
-        $stmt->bind_param("s",$this->sellerID);
-        $stmt->execute();
-        $result = $stmt->get_result();
+        $result = $this->DataBaseHandler->loadSellerDefaultAccount($this->sellerID);
         if($result->num_rows===0){
             echo "該賣家沒有指定帳號，取得新帳號列表"."<br>";
             $this->renewShuffleAccountList();

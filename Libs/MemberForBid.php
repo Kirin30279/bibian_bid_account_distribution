@@ -3,7 +3,7 @@ namespace BibianBidAccount\Libs;
 
 use BibianBidAccount\Libs\Account;
 use BibianBidAccount\Libs\MemberLastTime;
-use mysqli;
+use BibianBidAccount\Libs\DB\DataBaseHandler;
 
 class MemberForBid
 {
@@ -29,11 +29,9 @@ class MemberForBid
     //↓除非投標失敗，才會指定到該賣家新帳號
     private $isMemberExist;
     
-    private $connect;//DB的連接
-
     public $testSucess; //拿來測試為投標成功或失敗用的參數，正式版刪除。
 
-    public $bidTime;//當前嘗試次數，超過3次則失敗
+    public $numOfBidTime;//當前嘗試次數，超過3次則失敗
 
     public $bidSuccess;//出價成功則外面迴圈不再出價
 
@@ -47,8 +45,10 @@ class MemberForBid
 
     private $finalDisplayStatus;//最後顯示結果的判斷依據
 
+    private $DataBaseHandler;
+
     public function __construct($memberID, $productID){
-        $this->connect = new mysqli('192.168.0.151','pt_wuser','pt_wuser1234','pt_develop');
+        $this->DataBaseHandler = new DataBaseHandler();
         $this->loadInfoFromDB($memberID, $productID);
         //讀取DB裡面該使用者對該賣場的投標資訊，若無，則isMemberExist屬性指定為False
         if(!($this->isMemberExist)){//未投標過此賣場
@@ -60,7 +60,7 @@ class MemberForBid
             echo "上次投標金額為：".$this->bidPrice."円<br>";
             echo "↑↑↑↑↑↑↑↑↑↑上次投標資訊↑↑↑↑↑↑↑↑↑↑"."<br>"."<br>"."<br>";
         }
-        $this->bidTime = 1;//代表這是第一次投標
+        $this->numOfBidTime = 1;//代表這是第一次投標
         $this->bidSuccess = false ;//投標成功後會改成True
         $this->finalDisplayStatus = 'fail' ;//最後判斷的時候會更改這個狀態
     }
@@ -106,7 +106,7 @@ class MemberForBid
     }
 
     private function autoBid($StatusArray){
-        $this->testSucess = $StatusArray["$this->bidTime"];
+        $this->testSucess = $StatusArray["$this->numOfBidTime"];
     }
 
     public function doBid(){
@@ -117,7 +117,7 @@ class MemberForBid
             $this->usedYahooAccount = $this->Account->returnNewAccount();
         } 
         
-        while($this->bidTime<4 && $this->bidSuccess===false){
+        while($this->numOfBidTime<4 && $this->bidSuccess===false){
             echo "【投標】開始投標，本次投標指定帳號為：「".$this->usedYahooAccount."」<br>";
             $this->autoBid($this->bidStatus);//測試用的函數，傳入值為成功或失敗的順序。
             if ($this->testSucess){
@@ -136,7 +136,7 @@ class MemberForBid
             } else{
                 $this->renewBidingTime = date("Y-m-d H:i:s");
                 $this->saveBidHistoryToDB();
-                $this->bidTime += 1 ;
+                $this->numOfBidTime += 1 ;
                 $this->Account->addCounterOfSeller();
                 echo "【投標】。。投標失敗，換帳號。。".'<Br>'.'<Br>'.'<Br>';
                 $this->Account->shiftToNextAccount();//換下一個輪替用的帳號
@@ -145,11 +145,11 @@ class MemberForBid
                 
             }
         }
-        if($this->bidTime>3){
+        if($this->numOfBidTime>3){
             echo "投標已達3次失敗，無法投標第4次，輪替該賣家指定帳號後，退出投標流程"."<br>";
             $this->finalDisplayStatus = 'fail';
         }
-        if($this->bidTime>=2 or !($this->isMemberExist)){
+        if($this->numOfBidTime>=2 or !($this->isMemberExist)){
             //投標次數兩次以上，表示賣家預設帳號有改變
             $this->Account->saveInfoToDB();//注意:這是對seller_list的儲存帳號列表做更動    
         }
@@ -158,7 +158,7 @@ class MemberForBid
     private function compareWithOtherBidder(){
         //這邊僅能做投標的狀態分析
         $this->OldMember = new MemberLastTime($this->productID);
-        $this->OldMember->bidPrice = $this->returnPriceNow();
+        $this->OldMember->bidPrice = $this->DataBaseHandler->returnPriceNow($this->productID);
         //$this->getProductLastTimePrice();//取得當前賣場價格
         if($this->OldMember->thereIsNoLastBidder){
             $this->bidResult = 'firstOneInThisProduct';
@@ -193,23 +193,19 @@ class MemberForBid
         switch ($this->bidResult) {
             case 'firstOneInThisProduct':
                 echo "本商品尚未有人投標，本次投標者成為最高投標者，無須比較。"."<BR>";
-                //$this->highestNow = true;
                 $priceSaveToProductList = $this->bidPrice;
-                $updatePriceNow = "UPDATE `product_list` SET `nowPrice` = $priceSaveToProductList WHERE `productID` = '$this->productID'";
-                $this->connect->query($updatePriceNow);
+                $this->DataBaseHandler->updatePriceNow($this->productID, $priceSaveToProductList);
                 $this->finalDisplayStatus = 'success';
                 break;
             
             case 'thisBidderWasHighest':
                 echo "本次投標者即為最高投標者，無須加價環節，直接更改該投標者金額上限。"."<BR>";
-                //$this->highestNow = true;
                 $priceSaveToProductList = $this->bidPrice;
                 $this->finalDisplayStatus = 'success';
                 break;
 
             case 'thisBidderWasHighestButIllegal':
                 echo "上次為最高投標者，但本次出價增額不足"."<BR>";
-                //$this->highestNow = true;
                 $priceSaveToProductList = $this->OldMember->bidPrice;
                 $this->finalDisplayStatus = 'increseInsufficient';
                 break;
@@ -217,25 +213,19 @@ class MemberForBid
             case 'thisBidderLose':
                 echo "【比較結果】出價失敗，增額不足。"."<BR>";
                 $priceSaveToProductList = $this->bidPrice;//價格被更新為較小的那個
-                //$this->highestNow = false;
-                //$this->priceBeenExceed = true;
                 $this->finalDisplayStatus = 'increseInsufficient';
                 break;
     
             case 'thisBidderWin':
                 echo "【比較結果】新投標者出價大於「當前最高價再增額一次」。"."<BR>";
                 $priceSaveToProductList = $this->bidPrice;//價格被更新為最高價再增額   
-                //$this->highestNow = true;
-                $oldMemberID = $this->OldMember->memberID;
-                $updateOldHiighest = "UPDATE `bidder_list` SET `highestNow` = 0  WHERE `productID` = '$this->productID' and `memberID` = '$oldMemberID'";
-                $this->connect->query($updateOldHiighest);//將之前最高投標者的標記改為0。
+                $this->DataBaseHandler->updateOldHighestLose($this->productID, $this->OldMember->memberID);
                 $this->finalDisplayStatus = 'success';
                 break;
             
             case 'thisBidderAlmostWin':
                 echo "【比較結果】新投標者出價大於當前最高價，但增額後不夠，故最高投標者不變，通知新投標者增額不足。"."<BR>";
                 $priceSaveToProductList = $this->OldMember->bidPrice;
-                //$this->highestNow = false;
                 $this->finalDisplayStatus = 'increseInsufficient';
                 break;
     
@@ -246,9 +236,7 @@ class MemberForBid
         }
         $this->productNowPrice = $priceSaveToProductList;
         if ($this->bidPrice>=$this->addIncreasingValue($this->OldMember->bidPrice)){
-            $updatePriceNow = "UPDATE `product_list` SET `nowPrice` = $priceSaveToProductList WHERE `productID` = '$this->productID'";
-            $this->connect->query($updatePriceNow);
-
+            $this->DataBaseHandler->updatePriceNow($this->productID, $priceSaveToProductList);
         } else{
             $this->productNowPrice = $this->OldMember->bidPrice;
             $this->finalDisplayStatus = 'increseInsufficient';
@@ -257,27 +245,23 @@ class MemberForBid
     }
 
     private function saveInfoToDB(){
-        $stmt = $this->connect->prepare("INSERT INTO bidder_list(memberID, usedYahooAccount, productID, bidPrice, sellerID, firstBidingTime, renewBidingTime, bidStatus, highestNow) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ON DUPLICATE KEY UPDATE 
-        usedYahooAccount = VALUES(usedYahooAccount), 
-        bidPrice = VALUES(bidPrice), 
-        renewBidingTime = VALUES(renewBidingTime), 
-        bidStatus = VALUES(bidStatus),
-        highestNow = VALUES(highestNow)");
-        
         $this->checkHighestOrNot();
-        $stmt->bind_param("ississsii", 
-        $this->memberID, $this->usedYahooAccount, $this->productID, $this->bidPrice, $this->sellerID , $this->firstBidingTime, $this->renewBidingTime, $this->finalBidOrImmediateBid ,$this->highestNow);
-        
-        $stmt->execute();
+        $dataArray = array(
+            'memberID' => "$this->memberID",
+            'usedYahooAccount' => "$this->usedYahooAccount",
+            'productID' => "$this->productID",
+            'bidPrice' => "$this->bidPrice",
+            'sellerID' => "$this->sellerID",
+            'firstBidingTime' => "$this->firstBidingTime",
+            'renewBidingTime' => "$this->renewBidingTime",
+            'bidStatus' => "$this->finalBidOrImmediateBid",
+            'highestNow' => "$this->highestNow"
+        );
+        $this->DataBaseHandler->saveInfoToDB($dataArray);
     }
 
     private function loadInfoFromDB($memberID, $productID){
-        $stmt = $this->connect->prepare("SELECT * FROM `bidder_list` WHERE `productID` = ? ");
-        $stmt->bind_param("s", $productID);
-        $stmt->execute();
-        $result = $stmt->get_result();
+        $result = $this->DataBaseHandler->loadInfoFromDB($memberID, $productID);
         $this->usedYahooAccountArray = array();
         if (!empty($result->num_rows)){
             $rows = $result -> fetch_all(MYSQLI_ASSOC);
@@ -294,13 +278,18 @@ class MemberForBid
     }
 
     private function saveBidHistoryToDB(){
-        $stmt = $this->connect->prepare("INSERT INTO bid_histroy(memberID, usedYahooAccount, productID, bidPrice, BidingTime ,bidSuccess , memberBidTime)
-        VALUES (?, ?, ?, ?, ?, ?, ?)");
-        $bidSuccess = $this->checkSuccessWithFinalStatus() ;
-        $stmt->bind_param("issisii", 
-        $this->memberID, $this->usedYahooAccount, $this->productID, $this->bidPrice, $this->renewBidingTime, $bidSuccess , $this->bidTime);
+        $bidSuccess = $this->checkSuccessWithFinalStatus();
+        $dataArray = array(
+            'memberID' => "$this->memberID",
+            'usedYahooAccount' => "$this->usedYahooAccount",
+            'productID' => "$this->productID",
+            'bidPrice' => "$this->bidPrice",
+            'renewBidingTime' => "$this->renewBidingTime",
+            'bidSuccess' => "$bidSuccess",
+            'numOfBidTime' => "$this->numOfBidTime"
+        );
 
-        $stmt->execute();
+        $this->DataBaseHandler->saveBidHistoryToDB($dataArray);
     }
 
     private function checkSuccessWithFinalStatus(){//確認是否出價成功的Fun.，放saveBidHistoryToDB中
@@ -322,7 +311,7 @@ class MemberForBid
     }
 
     public function sendBidInfoForAnnouncer(){
-        $priceNow = $this->returnPriceNow();
+        $priceNow = $this->DataBaseHandler->returnPriceNow($this->productID);
         $bidInfo = array(
             'memberID' => "$this->memberID",
             'sellerID' => "$this->sellerID",
@@ -332,7 +321,7 @@ class MemberForBid
             'PriceNow' => "$priceNow",
             'bidSuccess' => "$this->bidSuccess",
             'finalDisplayStatus' => "$this->finalDisplayStatus",
-            'bidTime' => "$this->bidTime",
+            'bidTime' => "$this->numOfBidTime",
         );
         return $bidInfo;
     }
@@ -359,12 +348,6 @@ class MemberForBid
         return $price ;
 }
 
-    private function returnPriceNow(){
-        $selectProductList = "SELECT * FROM product_list WHERE `productID` = '$this->productID'";
-        $resultProductList = $this->connect->query($selectProductList);
-        $resultProductList = $resultProductList->fetch_all(MYSQLI_ASSOC);
-        return $resultProductList[0]['nowPrice'];
-    }
 
 }
 

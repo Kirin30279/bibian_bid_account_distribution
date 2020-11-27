@@ -11,7 +11,7 @@
 <h1>這是出價紀錄列表</h1>
 <h2>以下為賣場：<?PHP $productID = $_GET['productID']; echo $productID ;?>的出價紀錄</h2>
 
-<?php include '..\Controller\Page\bidHistory.php';?>
+<?php include '../Controller/Page/bidHistory.php';?>
 
 
 

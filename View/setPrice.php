@@ -13,7 +13,7 @@
 
 <?PHP
 $productID = $_GET['productID'];//賣場
-include '..\Controller\Page\setPrice.php';
+include '../Controller/Page/setPrice.php';
 ?>
 
 

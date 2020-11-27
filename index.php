@@ -26,10 +26,7 @@
         </tr>
       </thead>
       <tbody>
-        <?php include 'Controller\Page\homepage.php';?>
-
-        
-
+        <?php include 'Controller/Page/homepage.php';?>
       </tbody>
     </table>
     </div>

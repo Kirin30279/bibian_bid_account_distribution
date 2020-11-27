@@ -10,5 +10,5 @@
 <body>
 <h1>這是使用帳號列表</h1>
 <h2>以下為賣場：<?PHP $productID = $_GET['productID']; echo $productID ;?>當前使用的帳號</h2>
-<?php include '..\Controller\Page\orderOfBidAccount.php';?>
+<?php include '../Controller/Page/orderOfBidAccount.php';?>
 

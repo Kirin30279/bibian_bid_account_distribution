@@ -15,8 +15,6 @@ class Account
 
     private $accountNext;
 
-    private $connect;
-
     private $accountList;
     
     private $sellerID;

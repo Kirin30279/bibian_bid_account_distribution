@@ -6,24 +6,14 @@ function showTheHighestBidder($token)
     }
 }
 
-?>
-<!DOCTYPE html>
-<html>
+use BibianBidAccount\Model\PageDataHandler;
+include '../config.php';
+$PageDataHandler = new PageDataHandler();
 
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>使用帳號列表</title>
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-</head>
-<body>
-<h1>這是使用帳號列表</h1>
-<h2>以下為賣場：<?PHP $productID = $_GET['productID']; echo $productID ;?>當前使用的帳號</h2>
-<?PHP
-$connect = new mysqli('192.168.0.151','pt_wuser','pt_wuser1234','pt_develop');
-$productID = $connect->real_escape_string($productID);
-$query = "SELECT * FROM `bidder_list` WHERE `productID` = '$productID' ORDER BY `bidPrice` DESC ";
-$result = $connect->query($query);
+$result = $PageDataHandler->getOrderOfBidAccount($productID);
+if (!$result) die("Fatal Error");
+
+
 $bidderNumber = $result->num_rows;
   if ($bidderNumber!=0){
 
@@ -67,12 +57,10 @@ $bidderNumber = $result->num_rows;
         $i++;
     }
     echo "</div>";
-    echo '<input type="button" value="點我返回商品頁面" onclick="location.href=\'index.php\'">';
+    echo '<input type="button" value="點我返回商品頁面" onclick="location.href=\'../index.php\'">';
   } else{
     echo '<span style="color:#FF0000;">'."本商品尚未有人投標或賣場不存在".'</span>'."<br>";
-    echo '<input type="button" value="點我返回商品頁面" onclick="location.href=\'index.php\'">';
+    echo '<input type="button" value="點我返回商品頁面" onclick="location.href=\'../index.php\'">';
     exit;
   }
-  ?>
-
-
+?>

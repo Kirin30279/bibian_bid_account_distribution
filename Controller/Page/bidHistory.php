@@ -1,4 +1,5 @@
 <?PHP
+
 function showBidSuccessOrFail($token)
 {
   if($token == 0){
@@ -7,25 +8,16 @@ function showBidSuccessOrFail($token)
     return '<span style="color:#00FF00;"><b>出價成功</b></span>';
   }
 }
-?>
 
-<!DOCTYPE html>
-<html>
+use BibianBidAccount\Model\PageDataHandler;
+include '../config.php';
+$PageDataHandler = new PageDataHandler();
 
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>入札履歷</title>
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-</head>
-<body>
-<h1>這是入札履歷列表</h1>
-<h2>以下為賣場：<?PHP $productID = $_GET['productID']; echo $productID ;?>的入札履歷</h2>
-<?PHP
-$connect = new mysqli('192.168.0.151','pt_wuser','pt_wuser1234','pt_develop');
-$productID = $connect->real_escape_string($productID);
-$query = "SELECT * FROM `bid_histroy` WHERE `productID` = '$productID' ORDER BY `bidPrice` DESC , `BidingTime` DESC, `memberBidTime` DESC ";
-$result = $connect->query($query);
+$result = $PageDataHandler->getBidHistory($productID);
+if (!$result) die("Fatal Error");
+
+
+
 $bidderNumber = $result->num_rows;
   if ($bidderNumber!=0){
 
@@ -86,12 +78,16 @@ $bidderNumber = $result->num_rows;
     }
     echo "</div>";
     
-    echo '<input type="button" value="點我返回商品頁面" onclick="location.href=\'index.php\'">';
+    echo '<input type="button" value="點我返回商品頁面" onclick="location.href=\'../index.php\'">';
   } else{
     echo '<span style="color:#FF0000;">'."本商品尚未有人投標或賣場不存在".'</span>'."<br>";
-    echo '<input type="button" value="點我返回商品頁面" onclick="location.href=\'index.php\'">';
+    echo '<input type="button" value="點我返回商品頁面" onclick="location.href=\'../index.php\'">';
     exit;
   }
   ?>
+
+
+
+
 
 

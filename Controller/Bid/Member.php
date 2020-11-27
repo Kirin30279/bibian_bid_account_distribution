@@ -1,11 +1,11 @@
 <?php
-namespace BibianBidAccount\Libs;
+namespace BibianBidAccount\Controller\Bid;
 
-use BibianBidAccount\Libs\Account;
-use BibianBidAccount\Libs\MemberLastTime;
-use BibianBidAccount\Libs\DB\DataBaseHandler;
+use BibianBidAccount\Controller\Bid\Account;
+use BibianBidAccount\Controller\Bid\MemberLastTime;
+use BibianBidAccount\Model\DataBaseHandler;
 
-class MemberForBid
+class Member
 {
     private $memberID;
 

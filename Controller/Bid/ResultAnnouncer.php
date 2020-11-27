@@ -1,5 +1,5 @@
 <?php
-namespace BibianBidAccount\Libs;
+namespace BibianBidAccount\Controller\Bid;
 use mysqli;
 
 class ResultAnnouncer{

@@ -1,7 +1,7 @@
 <?PHP
-namespace BibianBidAccount\Libs;
+namespace BibianBidAccount\Controller\Bid;
 
-use BibianBidAccount\Libs\DB\DataBaseHandler;
+use BibianBidAccount\Model\DataBaseHandler;
 use mysqli;
 
 class Account
@@ -67,7 +67,7 @@ class Account
         $this->accountNext = $this->accountList["$selectNum"];
         echo "切換到下一個帳號:"."$this->accountNext"."<BR>"; 
         while ($this->isAccountUsed($this->accountNext)) {
-            $this->addCounterOfSeller();
+            $this->sellerCounter += 1;
             echo "輪替的帳號".$this->accountNext."於該賣場已被使用，再往下繼續輪"."<BR>";
             $selectNum = ($this->sellerCounter + $this->quantityOfProductAccount) % $this->quantityOfSellerAccount;
             $this->accountNext = $this->accountList["$selectNum"];

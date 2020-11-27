@@ -1,14 +1,14 @@
 <?PHP
-include 'config.php';
-use BibianBidAccount\Libs\MemberForBid;
-use BibianBidAccount\Libs\ResultAnnouncer;
+include '../config.php';
+use BibianBidAccount\Controller\Bid\Member;
+use BibianBidAccount\Controller\Bid\ResultAnnouncer;
 $productID = $_POST['productID'];//賣場
 $sellerID = $_POST['sellerID'];//賣家
 $bidPrice = $_POST['bidPrice'];
 $successChoice = $_POST['success'];
 $memberID = $_POST['memberID'];       //會員編號
 $bidStatus = 0;           //出價狀態：最後出價、立即出價
-$member = new MemberForBid($memberID, $productID);
+$member = new Member($memberID, $productID);
 
 $member->setBidPrice($bidPrice);
 $member->setFinalOrImmediate($bidStatus);
@@ -36,5 +36,3 @@ $Announcer->showBidInfo();
 
 
 ?>
-
-<input type="button" value="點我返回商品頁面" onclick="location.href='index.php'"class="btn btn-danger">

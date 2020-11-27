@@ -1,5 +1,5 @@
 <?php
-namespace BibianBidAccount\Libs\DB;
+namespace BibianBidAccount\Model;
 
 use mysqli;
 class DataBaseHandler{

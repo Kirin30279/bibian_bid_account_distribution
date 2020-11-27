@@ -1,11 +1,12 @@
 <?PHP
-//include "Libs/Product.php";
-//include "Libs/Seller.php";
 date_default_timezone_set("Asia/Taipei");
-include "Libs/MemberForBid.php";
-include "Libs/YahooAccount.php";
-include "Libs/Account.php";
-include "Libs/MemberLastTime.php";
-include "Libs/ResultAnnouncer.php";
-include "Libs/DB/DataBaseHandler.php";
+include "Config/YahooAccount.php";
+
+include "Controller/Bid/Member.php";
+include "Controller/Bid/Account.php";
+include "Controller/Bid/MemberLastTime.php";
+include "Controller/Bid/ResultAnnouncer.php";
+
+include "Model/DataBaseHandler.php";
+
 ?>

@@ -1,14 +1,3 @@
-<?PHP
-function showBidSuccessOrFail($token)
-{
-  if($token == 0){
-    return '<span style="color:#FF0000;"><b>出價失敗</b></span>';
-  }else {
-    return '<span style="color:#00FF00;"><b>出價成功</b></span>';
-  }
-}
-?>
-
 <!DOCTYPE html>
 <html>
 
@@ -22,6 +11,15 @@ function showBidSuccessOrFail($token)
 <h1>這是入札履歷列表</h1>
 <h2>以下為賣場：<?PHP $productID = $_GET['productID']; echo $productID ;?>的入札履歷</h2>
 <?PHP
+
+function showBidSuccessOrFail($token)
+{
+  if($token == 0){
+    return '<span style="color:#FF0000;"><b>出價失敗</b></span>';
+  }else {
+    return '<span style="color:#00FF00;"><b>出價成功</b></span>';
+  }
+}
 $connect = new mysqli('192.168.0.151','pt_wuser','pt_wuser1234','pt_develop');
 $productID = $connect->real_escape_string($productID);
 $query = "SELECT * FROM `bid_histroy` WHERE `productID` = '$productID' ORDER BY `bidPrice` DESC , `BidingTime` DESC, `memberBidTime` DESC ";

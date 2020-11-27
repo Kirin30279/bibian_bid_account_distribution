@@ -10,38 +10,11 @@
 <body>
 <h1>這是投標頁面</h1>
 <h2>以下為您本次投標的商品資訊</h2>
+
 <?PHP
 $productID = $_GET['productID'];//賣場
-$connect = new mysqli('192.168.0.151','pt_wuser','pt_wuser1234','pt_develop');
-$productID = $connect->real_escape_string($productID);
-$queryForProduct = "SELECT * FROM `product_list` WHERE `productID` = '$productID' AND `endTime` >= TIME(NOW())";
-$resultOfProduct = $connect->query($queryForProduct);
-  if ($resultOfProduct->num_rows!=0){
-    $dataArray = $resultOfProduct->fetch_array(MYSQLI_ASSOC);
-    $sellerID = $dataArray['sellerID'] ; 
-    
-    $queryForSeller = "SELECT * FROM `seller_list` WHERE `sellerID` = '$sellerID'";
-    $resultSeller = $connect->query($queryForSeller);
-
-    if ($resultSeller->num_rows!=0){
-      $sellerInfo = $resultSeller->fetch_array(MYSQLI_ASSOC);
-      $defaultBidAccount = $sellerInfo['yahooAccountNow'];
-    } else{
-      $defaultBidAccount = "本賣家為第一次投標，沒有預設帳號。";
-    }
-    echo "投標賣場編號：".$productID."<br>";
-    echo "投標賣家ID：".$sellerID."<br>";
-    echo "投標賣家預設帳號:".$defaultBidAccount."<br>";
-    echo "投標賣場標題：".$dataArray['productTitle']."<br>";
-    echo "結標時間：".$dataArray['endTime']."<br>";
-    echo "起標價格：".$dataArray['beginPrice']."<br>";
-    echo '<span style="color:#FF0000;">'."目前價格：".$dataArray['nowPrice'].'</span>'."<br>";
-  } else{
-    echo '<span style="color:#FF0000;">'."本商品不存在或已下架，請回到商品頁面重新選擇投標商品".'</span>'."<br>";
-    echo '<input type="button" value="點我返回商品頁面" onclick="location.href=\'index.php\'">';
-    exit;
-  }
-  ?>
+include '..\Controller\Page\setPrice.php';
+?>
 
 
 <h4>請輸入投標金額並按下「出價」以完成投標出價</h4>
@@ -95,7 +68,7 @@ $resultOfProduct = $connect->query($queryForProduct);
     </div>
     
     <input type="submit" value='出價' class="btn btn-primary">
-    <input type="button" value="取消" onclick="location.href='index.php'"class="btn btn-danger">
+    <input type="button" value="取消" onclick="location.href='../index.php'"class="btn btn-danger">
 
 
 

@@ -8,5 +8,5 @@ include "Controller/Bid/MemberLastTime.php";
 include "Controller/Bid/ResultAnnouncer.php";
 
 include "Model/DataBaseHandler.php";
-
+include "Model/PageDataHandler.php";
 ?>
